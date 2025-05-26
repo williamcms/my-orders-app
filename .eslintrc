@@ -1,0 +1,19 @@
+{
+  "extends": "vtex-react/io",
+  "rules": {
+    "no-console": "warn",
+    "no-shadow": "warn",
+    "no-restricted-imports": "warn",
+    "@typescript-eslint/camelcase": "off",
+    "prettier/prettier": ["error", { "endOfLine": "auto" }],
+    "react/jsx-filename-extension": [1, { "extensions": [".jsx", ".tsx", ".jsx"] }],
+    "react/jsx-no-bind": "warn",
+    "@typescript-eslint/ban-ts-comment": [
+      "error",
+      {
+        "ts-expect-error": "allow-with-description",
+        "minimumDescriptionLength": 3
+      }
+    ]
+  }
+}

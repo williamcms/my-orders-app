@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "product-card-badge",
+  "name": "my-orders-app",
   "scripts": {
     "lint": "eslint --ext js,jsx,ts,tsx .",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json}\"",
