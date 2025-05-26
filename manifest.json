@@ -1,0 +1,64 @@
+{
+  "name": "my-orders-app",
+  "vendor": "{{vendor}}",
+  "version": "0.0.0",
+  "title": "Custom My Orders Page for My Account",
+  "builders": {
+    "react": "3.x",
+    "store": "0.x",
+    "node": "7.x"
+  },
+  "dependencies": {
+    "vtex.responsive-values": "0.x",
+    "vtex.rich-text": "0.x",
+    "vtex.my-account": "1.x",
+    "vtex.styleguide": "9.x",
+    "vtex.my-account-commons": "1.x",
+    "vtex.orders-graphql": "0.x",
+    "vtex.pixel-manager": "1.x",
+    "vtex.order-items": "0.x"
+  },
+  "policies": [
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "portal.vtexcommercestable.com.br",
+        "path": "/*"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "{{account}}.myvtex.com",
+        "path": "/api/vtexid/*"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "{{account}}.vtexcommercestable.com.br",
+        "path": "/api/vtexid/*"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "{{account}}.com.br",
+        "path": "/api/vtexid/*"
+      }
+    },
+    {
+      "name": "OMSViewer"
+    },
+    {
+      "name": "ListOrders"
+    },
+    {
+      "name": "vbase-read-write"
+    }
+  ],
+  "scripts": {
+    "postreleasy": "vtex publish --verbose"
+  },
+  "$schema": "https://raw.githubusercontent.com/vtex/node-vtex-api/master/gen/manifest.schema"
+}

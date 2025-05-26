@@ -1,0 +1,43 @@
+{
+  "private": true,
+  "name": "product-card-badge",
+  "scripts": {
+    "lint": "eslint --ext js,jsx,ts,tsx .",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json}\"",
+    "start": "concurrently \"npm:vlink\"",
+    "vlink": "vtex link --verbose --clean"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,js,tsx,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,graphql,gql}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^12.12.21",
+    "@vtex/prettier-config": "0.1.4",
+    "concurrently": "^8.2.2",
+    "eslint": "7.12.1",
+    "eslint-config-vtex": "12.3.2",
+    "eslint-config-vtex-react": "^6.4.0",
+    "husky": "4.2.3",
+    "lint-staged": "10.1.1",
+    "prettier": "2.0.2",
+    "typescript": "3.8.3"
+  },
+  "dependencies": {},
+  "license": "UNLICENSED",
+  "author": {
+    "name": "William Di Biasi Bogik",
+    "url": "https://github.com/williamcms/"
+  },
+  "$schema": "https://raw.githubusercontent.com/vtex/node-vtex-api/master/gen/manifest.schema"
+}
