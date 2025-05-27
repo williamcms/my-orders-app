@@ -241,7 +241,7 @@
 
 .itemName {
   font-weight: 500;
-  color: #ff9900;
+  color: #d21a52;
 }
 
 .itemPrice {
@@ -360,14 +360,14 @@
 }
 
 .buttonOrange {
-  background-color: #ff9900;
+  background-color: #d21a52;
   color: white;
   height: 2.5rem;
   padding: 0 1rem;
 }
 
 .buttonOrange:hover {
-  background-color: #e68a00;
+  background-color: #d21a52;
 }
 
 .buttonSuccess {
@@ -642,7 +642,7 @@
 
 .packageItem:hover {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .packageHeader {
@@ -685,7 +685,7 @@
   padding: 1rem;
   background: #f1f5f9;
   border-radius: 0.5rem;
-  border-left: 3px solid #ff9900;
+  border-left: 3px solid #d21a52;
 }
 
 .packageInfoItem span:first-child {
@@ -719,14 +719,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: linear-gradient(135deg, #f1f5f9 0%, rgba(241, 245, 249, 0.7) 100%);
+  background: linear-gradient(135deg, #f1f5f9 0%, #fff3f6 100%);
   border-radius: 0.75rem;
   border: 1px solid #e2e8f0;
-  transition: all 0.2s ease;
+  transition: all 0.2s ease-in-out;
 }
 
 .packageItemDetail:hover {
-  background: linear-gradient(135deg, #f1f5f9 0%, #ff990010 100%);
+  background: linear-gradient(135deg, #f1f5f9 0%, #ffc4dd70 100%);
   transform: translateX(2px);
 }
 
@@ -748,9 +748,9 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 1.5rem;
-  background: #b6e9c8;
+  background: #f7196330;
   border-radius: 0.75rem;
-  box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.3);
+  box-shadow: 0 4px 6px -1px #07112750;
 }
 
 .trackingDescription {
