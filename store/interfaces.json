@@ -1,0 +1,8 @@
+{
+  "my-account-page.test-page": {
+    "component": "MyAppPage"
+  },
+  "my-account-link.test-link": {
+    "component": "MyAppLink"
+  }
+}
