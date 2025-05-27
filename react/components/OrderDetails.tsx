@@ -10,8 +10,10 @@ import { CardHeader, CardContent, Card } from './ui/card'
 import { PackageIcon } from './ui/svg'
 import { Skeleton } from './ui/skeleton'
 import { getPaymentMethodName } from '../utils/getPaymentMethodName'
-import styles from '../styles/index.module.css'
 import { Tooltip } from './ui/tooltip'
+import { getOrderStatus } from '../utils/getOrderStatus'
+import { ConnectorResponses } from './ConnectorResponses'
+import styles from '../styles/index.module.css'
 
 type Props = {
   _notUsed?: null
@@ -52,7 +54,7 @@ const OrderDetails = ({ match }: Props) => {
             <CardHeader className={styles.cardHeader}>
               <Skeleton style={{ width: '100%', height: '1.375rem' }} />
             </CardHeader>
-            <CardContent className={styles.cardContent}>
+            <CardContent className={styles.cardContentGrid}>
               <div className={styles.cardInnerContent}>
                 <Skeleton style={{ width: '70%', height: '1.125rem' }} />
                 <Skeleton style={{ width: '100%', height: '2.875rem' }} />
@@ -64,7 +66,7 @@ const OrderDetails = ({ match }: Props) => {
             <CardHeader className={styles.cardHeader}>
               <Skeleton style={{ width: '100%', height: '1.375rem' }} />
             </CardHeader>
-            <CardContent className={styles.cardContent}>
+            <CardContent className={styles.cardContentGrid}>
               <div className={styles.paymentContent}>
                 <Skeleton style={{ width: '100%', height: '4.5rem' }} />
               </div>
@@ -75,7 +77,7 @@ const OrderDetails = ({ match }: Props) => {
             <CardHeader className={styles.cardHeader}>
               <Skeleton style={{ width: '100%', height: '1.375rem' }} />
             </CardHeader>
-            <CardContent className={styles.cardContent}>
+            <CardContent className={styles.cardContentGrid}>
               <div className={styles.paymentDetails}>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Skeleton style={{ width: '100%', height: '1.5625rem' }} key={i} />
@@ -90,7 +92,7 @@ const OrderDetails = ({ match }: Props) => {
             </CardHeader>
             <CardContent className={styles.cardContent}>
               <div className={styles.orderSummaryContent}>
-                {Array.from({ length: 4 }).map((_, i) => (
+                {Array.from({ length: 5 }).map((_, i) => (
                   <Skeleton style={{ width: '100%', height: '1.5625rem' }} key={i} />
                 ))}
               </div>
@@ -121,7 +123,7 @@ const OrderDetails = ({ match }: Props) => {
           <CardHeader className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>Endereço de Entrega</h2>
           </CardHeader>
-          <CardContent className={styles.cardContent}>
+          <CardContent className={styles.cardContentGrid}>
             <div className={styles.cardInnerContent}>
               <div className={styles.addressName}>{order.details?.shippingData.address.receiverName}</div>
               <div className={styles.addressDetails}>{formatAddress(order.details?.shippingData.address)}</div>
@@ -136,13 +138,30 @@ const OrderDetails = ({ match }: Props) => {
           <CardHeader className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>Forma de Pagamento</h2>
           </CardHeader>
-          <CardContent className={styles.cardContent}>
+          <CardContent className={styles.cardContentGrid}>
             <div className={styles.paymentContent}>
               {order.details?.paymentData.transactions.map((transaction) =>
                 transaction.payments.map((payment) => (
                   <div key={payment.id} className={styles.cardInnerContent}>
                     <div className={styles.paymentName}>
                       {getPaymentMethodName(payment.paymentSystemName, payment.group)}
+
+                      {payment.paymentSystemName === 'Boleto Bancário' && payment.url && (
+                        <div className={styles.textMuted}>
+                          <Tooltip label="O link pode não estar mais disponível">
+                            <Button
+                              variant="link"
+                              size="sm"
+                              to={payment.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              isLink
+                            >
+                              (ver)
+                            </Button>
+                          </Tooltip>
+                        </div>
+                      )}
                     </div>
                     <div className={styles.paymentDetails}>
                       {payment.paymentSystemName === 'Vale' && (
@@ -157,6 +176,15 @@ const OrderDetails = ({ match }: Props) => {
                         </div>
                       )}
                       <div className={styles.totalValue}>R$ {formatCurrency(payment.value)}</div>
+
+                      {Object.entries(payment.connectorResponses).length > 0 && (
+                        <details className={styles.additionalInfo}>
+                          <summary className={`${styles.textMuted} ${styles.additionalInfoToggle}`}>
+                            Informações adicionais
+                          </summary>
+                          <ConnectorResponses responses={payment.connectorResponses} />
+                        </details>
+                      )}
                     </div>
                   </div>
                 ))
@@ -169,7 +197,7 @@ const OrderDetails = ({ match }: Props) => {
           <CardHeader className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>Detalhamento de Preços</h2>
           </CardHeader>
-          <CardContent className={styles.cardContent}>
+          <CardContent className={styles.cardContentGrid}>
             <div className={styles.orderSummaryContent}>
               {order.details?.totals.map((total) => (
                 <div key={total.id} className={styles.summaryItem}>
@@ -191,6 +219,10 @@ const OrderDetails = ({ match }: Props) => {
           </CardHeader>
           <CardContent className={styles.cardContent}>
             <div className={styles.orderSummaryContent}>
+              <div className={styles.summaryItem}>
+                <span className={styles.textMuted}>Status:</span>
+                <span className={styles.summaryValue}>{getOrderStatus(order).label}</span>
+              </div>
               <div className={styles.summaryItem}>
                 <span className={styles.textMuted}>Data do pedido:</span>
                 <span className={styles.summaryValue}>{formatDate(order.creationDate, '2-digit')}</span>
@@ -285,6 +317,7 @@ const OrderDetails = ({ match }: Props) => {
                           variant="outline"
                           size="sm"
                           to={packageMain.trackingUrl}
+                          target="_blank"
                           rel="noopener noreferrer"
                           isLink
                         >
@@ -319,15 +352,15 @@ const OrderDetails = ({ match }: Props) => {
                       }}
                     />
                   </div>
-                  <div className={styles.orderItemDetails}>
-                    <div className={styles.itemName}>{item.name}</div>
-                    <div className={styles.itemInfo}>
+                  <div className={styles.itemInfo}>
+                    <div className={styles.itemInfoCol}>
+                      <div className={styles.itemName}>{item.name}</div>
                       <div className={styles.textMuted}>SKU: {item.refId ?? item.sellerSku}</div>
                       <div className={styles.textMuted}>Quantidade: {item.quantity}</div>
-                      <div className={styles.textMuted}>Preço unitário: R$ {formatCurrency(item.sellingPrice)}</div>
-                      <div className={styles.itemPrice}>
-                        Total: R$ {formatCurrency(item.sellingPrice * item.quantity)}
-                      </div>
+                    </div>
+                    <div className={styles.itemInfoCol}>
+                      <div className={styles.itemPrice}>R$ {formatCurrency(item.sellingPrice * item.quantity)}</div>
+                      <div className={styles.textMuted}>R$ {formatCurrency(item.sellingPrice)} un.</div>
                     </div>
                   </div>
                 </div>
