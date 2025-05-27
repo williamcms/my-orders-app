@@ -21,13 +21,17 @@ const Content = ({ history }: MyPageProps, { header }: PageMessages) => {
 
   const headerContent = (
     <div className={styles.headerStyles}>
-      <div className={styles.textMuted}>
-        <RichText text={defaultHeader.text} />
-      </div>
+      {defaultHeader.text && (
+        <div className={styles.textMuted}>
+          <RichText text={defaultHeader.text} />
+        </div>
+      )}
 
-      <Button variant="orange" to={defaultHeader.link.url} target="_blank" rel="noreferrer" isLink>
-        Trocar Pedido
-      </Button>
+      {defaultHeader.link.url && (
+        <Button variant="orange" to={defaultHeader.link.url} target="_blank" rel="noreferrer" isLink>
+          {header?.link.text}
+        </Button>
+      )}
     </div>
   )
 
