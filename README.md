@@ -13,11 +13,15 @@ This application streamlines the order viewing process by providing detailed inf
 - **Responsive Design**: Fully responsive layout that works across all devices
 - **Status Badges**: Clear visual indicators of order status with tooltips for more information
 
-| ![Orders List](https://example.com/path/to/orders-list.png) |
+| ![Orders List](https://github.com/user-attachments/assets/9f850b96-2955-4ed6-b8b6-93c3d7d55375) |
 | :--------------------------------------------------------: |
 |                       _Orders List View_                     |
 
-| ![Order Details](https://example.com/path/to/order-details.png) |
+| ![Order Details](https://github.com/user-attachments/assets/1674bb90-2b82-4a08-bec2-4c6b3acb2533) |
+| :-----------------------------------------------------------: |
+|                      _Order Details View_                       |
+
+| ![Order Details](https://github.com/user-attachments/assets/18051309-5c05-4f30-927f-8b236f991098) |
 | :-----------------------------------------------------------: |
 |                      _Order Details View_                       |
 
@@ -54,6 +58,7 @@ The app provides two main views:
 - Complete payment and some billing information
 - Shipping address and delivery estimates
 - Detailed price breakdown including discounts
+- Courier status (if available in the order information)
 
 ## Technical Details
 
