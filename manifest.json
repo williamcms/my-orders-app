@@ -6,7 +6,8 @@
   "builders": {
     "react": "3.x",
     "store": "0.x",
-    "node": "7.x"
+    "node": "7.x",
+    "pixel": "0.x"
   },
   "dependencies": {
     "vtex.responsive-values": "0.x",
