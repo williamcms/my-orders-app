@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { MyPageProps } from '../types'
-import { OrderListItemWithDetails, OrderListResponse } from '../../node/types/orderList'
 import axios from 'axios'
+
+import type { MyPageProps } from '../types'
+import type { OrderListItemWithDetails, OrderListResponse } from '../../node/types/orderList'
 import { Button } from './ui/button'
 import { formatAddress, formatCurrency, formatDate } from '../utils/formats'
 import { Badge } from './ui/badge'
@@ -42,62 +43,65 @@ const OrderDetails = ({ match }: Props) => {
     console.log({ orderId, loading, order })
   }, [])
 
-  if (loading) {
+  if (!loading) {
     return (
       <div className={styles.container}>
         <div className={styles.orderDetailsGrid}>
           <Card className={styles.card}>
             <CardHeader className={styles.cardHeader}>
-              <Skeleton style={{ width: '16.375rem', height: '1.375rem' }} />
+              <Skeleton style={{ width: '100%', height: '1.375rem' }} />
             </CardHeader>
             <CardContent className={styles.cardContent}>
-              <Skeleton style={{ width: '74px', height: '18px' }} />
-              <Skeleton style={{ width: '74px', height: '18px' }} />
-              <Skeleton style={{ width: '74px', height: '18px' }} />
+              <div className={styles.cardInnerContent}>
+                <Skeleton style={{ width: '70%', height: '1.125rem' }} />
+                <Skeleton style={{ width: '100%', height: '2.875rem' }} />
+              </div>
             </CardContent>
           </Card>
 
           <Card className={styles.card}>
             <CardHeader className={styles.cardHeader}>
-              <Skeleton style={{ width: '16.375rem', height: '1.375rem' }} />
+              <Skeleton style={{ width: '100%', height: '1.375rem' }} />
             </CardHeader>
             <CardContent className={styles.cardContent}>
-              <Skeleton style={{ width: '74px', height: '18px' }} />
-              <Skeleton style={{ width: '74px', height: '18px' }} />
-              <Skeleton style={{ width: '74px', height: '18px' }} />
+              <div className={styles.paymentContent}>
+                <Skeleton style={{ width: '100%', height: '4.5rem' }} />
+              </div>
             </CardContent>
           </Card>
 
           <Card className={styles.card}>
             <CardHeader className={styles.cardHeader}>
-              <Skeleton style={{ width: '16.375rem', height: '1.375rem' }} />
+              <Skeleton style={{ width: '100%', height: '1.375rem' }} />
             </CardHeader>
             <CardContent className={styles.cardContent}>
-              <Skeleton style={{ width: '74px', height: '18px' }} />
-              <Skeleton style={{ width: '74px', height: '18px' }} />
-              <Skeleton style={{ width: '74px', height: '18px' }} />
+              <div className={styles.paymentDetails}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton style={{ width: '100%', height: '1.5625rem' }} key={i} />
+                ))}
+              </div>
             </CardContent>
           </Card>
 
           <Card className={`${styles.card} ${styles.fullLine}`}>
             <CardHeader className={styles.cardHeader}>
-              <Skeleton style={{ width: '16.375rem', height: '1.375rem' }} />
+              <Skeleton style={{ width: '100%', height: '1.375rem' }} />
             </CardHeader>
             <CardContent className={styles.cardContent}>
-              <Skeleton style={{ width: '74px', height: '18px' }} />
-              <Skeleton style={{ width: '74px', height: '18px' }} />
-              <Skeleton style={{ width: '74px', height: '18px' }} />
+              <div className={styles.orderSummaryContent}>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton style={{ width: '100%', height: '1.5625rem' }} key={i} />
+                ))}
+              </div>
             </CardContent>
           </Card>
 
           <Card className={`${styles.card} ${styles.fullLine}`}>
             <CardHeader className={styles.cardHeader}>
-              <Skeleton style={{ width: '16.375rem', height: '1.375rem' }} />
+              <Skeleton style={{ width: '100%', height: '1.5rem' }} />
             </CardHeader>
             <CardContent className={styles.cardContent}>
-              <Skeleton style={{ width: '74px', height: '18px' }} />
-              <Skeleton style={{ width: '74px', height: '18px' }} />
-              <Skeleton style={{ width: '74px', height: '18px' }} />
+              <Skeleton style={{ width: '100%', height: '27.1875rem' }} />
             </CardContent>
           </Card>
         </div>
