@@ -13,7 +13,9 @@ import { getPaymentMethodName } from '../utils/getPaymentMethodName'
 import styles from '../styles/index.module.css'
 import { Tooltip } from './ui/tooltip'
 
-type Props = {} & Pick<MyPageProps, 'match'>
+type Props = {
+  _notUsed?: null
+} & Pick<MyPageProps, 'match'>
 
 const OrderDetails = ({ match }: Props) => {
   const {
@@ -22,6 +24,8 @@ const OrderDetails = ({ match }: Props) => {
 
   const [loading, setLoading] = useState(true)
   const [order, setOrder] = useState<OrderListItemWithDetails | undefined>()
+
+  const packageList = order?.details?.packageAttachment.packages || []
 
   useEffect(() => {
     axios
@@ -207,7 +211,7 @@ const OrderDetails = ({ match }: Props) => {
           </CardContent>
         </Card>
 
-        <Card className={`${styles.card} ${styles.fullLine}`}>
+        <Card className={`${styles.card} ${styles.fullLine} ${packageList.length === 0 ? styles.hidden : ''}`}>
           <CardHeader className={styles.cardHeader}>
             <div className={styles.cardTitleWithIcon}>
               <PackageIcon className={styles.icon_marginRight} />
@@ -216,40 +220,40 @@ const OrderDetails = ({ match }: Props) => {
           </CardHeader>
           <CardContent className={styles.cardContent}>
             <div className={styles.packagesList}>
-              {order.details?.packageAttachment.packages.map((packageItem, index) => (
+              {order.details?.packageAttachment.packages.map((packageMain, index) => (
                 <div key={index} className={styles.packageItem}>
                   <div className={styles.packageHeader}>
                     <h3 className={styles.packageTitle}>Pacote {index + 1}</h3>
-                    <Badge variant="outline">{packageItem.courier || 'Transportadora'}</Badge>
+                    <Badge variant="outline">{packageMain.courier ?? 'Transportadora'}</Badge>
                   </div>
 
                   <div className={styles.packageDetails}>
                     <div className={styles.packageInfo}>
-                      <Tooltip label={packageItem.invoiceKey}>
+                      <Tooltip label={packageMain.invoiceKey}>
                         <div className={styles.packageInfoItem}>
                           <span className={styles.textMuted}>Nota fiscal:</span>
-                          <span>{packageItem.invoiceNumber}</span>
+                          <span>{packageMain.invoiceNumber}</span>
                         </div>
                       </Tooltip>
-                      {packageItem.trackingNumber && (
+                      {packageMain.trackingNumber && (
                         <div className={styles.packageInfoItem}>
                           <span className={styles.textMuted}>Rastreamento:</span>
-                          <span>{packageItem.trackingNumber}</span>
+                          <span>{packageMain.trackingNumber}</span>
                         </div>
                       )}
                       <div className={styles.packageInfoItem}>
                         <span className={styles.textMuted}>Data de emissão:</span>
-                        <span>{formatDate(packageItem.issuanceDate)}</span>
+                        <span>{formatDate(packageMain.issuanceDate)}</span>
                       </div>
                       <div className={styles.packageInfoItem}>
                         <span className={styles.textMuted}>Valor da nota:</span>
-                        <span>R$ {formatCurrency(packageItem.invoiceValue)}</span>
+                        <span>R$ {formatCurrency(packageMain.invoiceValue)}</span>
                       </div>
                     </div>
 
                     <div className={styles.packageItems}>
                       <h4 className={styles.packageItemsTitle}>Itens neste pacote:</h4>
-                      {packageItem.items.map((packageItem) => {
+                      {packageMain.items.map((packageItem) => {
                         return (
                           <div key={packageItem.itemIndex} className={styles.packageItemDetail}>
                             <span>{packageItem.description}</span>
@@ -260,27 +264,27 @@ const OrderDetails = ({ match }: Props) => {
                       })}
                     </div>
 
-                    {packageItem.courierStatus?.data && packageItem.courierStatus?.data.length > 0 && (
+                    {packageMain.courierStatus?.data && packageMain.courierStatus?.data.length > 0 && (
                       <div className={styles.trackingStatus}>
                         <h4 className={styles.trackingTitle}>Status de rastreamento:</h4>
                         <div className={styles.trackingEvent}>
                           <div className={styles.trackingDescription}>
-                            {packageItem.courierStatus?.data?.[0].description}
+                            {packageMain.courierStatus?.data?.[0].description}
                           </div>
                           <div className={styles.textMuted}>
-                            {packageItem.courierStatus?.data?.[0].city}, {packageItem.courierStatus?.data?.[0].state} -{' '}
-                            {formatDate(packageItem.courierStatus?.data?.[0].lastChange)}
+                            {packageMain.courierStatus?.data?.[0].city}, {packageMain.courierStatus?.data?.[0].state} -{' '}
+                            {formatDate(packageMain.courierStatus?.data?.[0].lastChange)}
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {packageItem.trackingUrl && (
+                    {packageMain.trackingUrl && (
                       <div className={styles.packageActions}>
                         <Button
                           variant="outline"
                           size="sm"
-                          to={packageItem.trackingUrl}
+                          to={packageMain.trackingUrl}
                           rel="noopener noreferrer"
                           isLink
                         >
