@@ -34,16 +34,13 @@ const OrderDetails = ({ match }: Props) => {
       .then((response) => {
         setLoading(false)
         setOrder(response.data?.list?.[0] ?? {})
-        console.log({ response })
       })
       .catch((error) => {
         console.error('Error fetching order:', error)
       })
+  }, [orderId])
 
-    console.log({ orderId, loading, order })
-  }, [])
-
-  if (!loading) {
+  if (loading) {
     return (
       <div className={styles.container}>
         <div className={styles.orderDetailsGrid}>
