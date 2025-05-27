@@ -171,7 +171,7 @@ export interface OrderListItemDetails {
   clientProfileData: ClientProfileData
   items: OrderItem[]
   marketplaceItems: unknown[]
-  cancellationRequests: CancellationRequest[]
+  cancellationRequests: CancellationRequest[] | null
   approvedBy: string | null
   cancelledBy: string | null
   purchaseAgentData: unknown | null
@@ -313,7 +313,7 @@ export interface Package {
   /**
    * Carrier package shipping information.
    */
-  courierStatus: CorrierStatus
+  courierStatus: CorrierStatus | null
   /**
    * CFOP (Código Fiscal de Operação e Prestação) is a Brazilian fiscal code of operations
    * and services that classifies business transactions types.
@@ -324,12 +324,12 @@ export interface Package {
    * Information about a value being returned to the customer.
    * This field applies only to invoices with the Input type because it relates to returning items.
    */
-  restitutions: Restitutions[]
+  restitutions: Restitutions[] | Record<string, never>
   /**
    * Indicates the number of boxes (volumes) needed to contain the package items.
    * For example, two refrigerators do not fit in a single volume, so this field would have value 2.
    */
-  volumes: number
+  volumes: number | null
   /**
    * Defines if the package items' value should be inferred by the invoice value (true) or not (false).
    */
@@ -344,19 +344,19 @@ export interface MarketingData {
   /**
    * Value of the utm_source parameter of the URL that led to the request
    */
-  utmSource: string
+  utmSource: string | null
   /**
    * UTM Source Parameters
    */
-  utmPartner: string
+  utmPartner: string | null
   /**
    * Value of the utm_medium parameter of the URL that led to the request
    */
-  utmMedium: string
+  utmMedium: string | null
   /**
    * Value of the utm_campaign parameter of the URL that led to the request
    */
-  utmCampaign: string
+  utmCampaign: string | null
   /**
    * Coupon code
    */
@@ -364,15 +364,15 @@ export interface MarketingData {
   /**
    * Internal UTM value utmi_cp
    */
-  utmiCampaign: string
+  utmiCampaign: string | null
   /**
    * Internal UTM value utmi_p
    */
-  utmipage: string
+  utmipage: string | null
   /**
    * Internal UTM value utmi_pc
    */
-  utmiPart: string
+  utmiPart: string | null
   /**
    * Marketing tags information.
    * This field can be used to register campaign data or informative tags regarding promotions
@@ -393,7 +393,7 @@ export interface OrderTotals {
    * For example, if marketplace item discounts cause a difference in the Items total value,
    * this field contains information explaining the discrepancy.
    */
-  alternativeTotals: AlternativeTotals
+  alternativeTotals?: AlternativeTotals
 }
 
 export type AlternativeTotals = Omit<OrderTotals, 'alternativeTotals'>
@@ -514,7 +514,7 @@ export interface CurrencyFormatInfo {
 
 export interface InvoiceData {
   userPaymentInfo: unknown | null
-  address: Address
+  address: Address | null
   invoiceSubject: string | null
 }
 

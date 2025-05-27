@@ -25,7 +25,7 @@ const OrderDetails = ({ match }: Props) => {
   const [loading, setLoading] = useState(true)
   const [order, setOrder] = useState<OrderListItemWithDetails | undefined>()
 
-  const packageList = order?.details?.packageAttachment.packages || []
+  const packageList = order?.details?.packageAttachment.packages ?? []
 
   useEffect(() => {
     axios
@@ -220,7 +220,7 @@ const OrderDetails = ({ match }: Props) => {
           </CardHeader>
           <CardContent className={styles.cardContent}>
             <div className={styles.packagesList}>
-              {order.details?.packageAttachment.packages.map((packageMain, index) => (
+              {packageList.map((packageMain, index) => (
                 <div key={index} className={styles.packageItem}>
                   <div className={styles.packageHeader}>
                     <h3 className={styles.packageTitle}>Pacote {index + 1}</h3>
@@ -292,6 +292,43 @@ const OrderDetails = ({ match }: Props) => {
                         </Button>
                       </div>
                     )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={`${styles.card} ${styles.fullLine} ${packageList.length !== 0 ? styles.hidden : ''}`}>
+          <CardHeader className={styles.cardHeader}>
+            <h2 className={styles.cardTitle}>Lista de Produtos</h2>
+          </CardHeader>
+          <CardContent className={styles.cardContent}>
+            <div className={styles.itemsList}>
+              {order.details?.items.map((item) => (
+                <div key={item.id} className={styles.orderItem}>
+                  <div className={styles.orderItemImage}>
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className={styles.itemImage}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src =
+                          'https://{{account}}.vtexassets.com/_v/public/assets/v1/published/vtex.my-orders-app@3.25.3/public/react/2ea7751cc60e35056a078060add977c2.svg'
+                      }}
+                    />
+                  </div>
+                  <div className={styles.orderItemDetails}>
+                    <div className={styles.itemName}>{item.name}</div>
+                    <div className={styles.itemInfo}>
+                      <div className={styles.textMuted}>SKU: {item.refId ?? item.sellerSku}</div>
+                      <div className={styles.textMuted}>Quantidade: {item.quantity}</div>
+                      <div className={styles.textMuted}>Preço unitário: R$ {formatCurrency(item.sellingPrice)}</div>
+                      <div className={styles.itemPrice}>
+                        Total: R$ {formatCurrency(item.sellingPrice * item.quantity)}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
