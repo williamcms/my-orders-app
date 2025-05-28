@@ -1,9 +1,9 @@
-import { OrderListItemWithDetails } from '../../node/types/orderList'
+import type { OrderListItemWithDetails } from '../../node/types/orderList'
 
 export const getTrackingNumber = (order: OrderListItemWithDetails) => {
-  if (order.details?.shippingData?.trackingHints && order.details?.packageAttachment.packages.length) {
+  if (order.details?.packageAttachment.packages.length) {
     return order.details?.packageAttachment.packages.reduce<
-      { trackingNumber: string | null; trackingUrl: string | null }[]
+      Array<{ trackingNumber: string | null; trackingUrl: string | null }>
     >((acc, item) => {
       const { trackingNumber, trackingUrl } = item
 
@@ -11,6 +11,7 @@ export const getTrackingNumber = (order: OrderListItemWithDetails) => {
         trackingNumber,
         trackingUrl,
       })
+
       return acc
     }, [])
   }
