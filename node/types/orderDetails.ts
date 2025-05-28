@@ -632,6 +632,10 @@ export interface LogisticsInfo {
   itemId: string
   selectedSla: string
   selectedDeliveryChannel: string
+  /**
+   * Logistics reservation waiting time.
+   * @link https://help.vtex.com/en/tutorial/how-does-reservation-work--tutorials_92
+   */
   lockTTL: string
   price: number
   listPrice: number
@@ -665,6 +669,10 @@ export interface SLA {
   deliveryChannel: string
   pickupStoreInfo: PickupStoreInfo
   polygonName: string
+  /**
+   * Logistics reservation waiting time.
+   * @link https://help.vtex.com/en/tutorial/how-does-reservation-work--tutorials_92
+   */
   lockTTL: string
   pickupPointId: string | null
   transitTime: string

@@ -7,10 +7,13 @@ export const getTrackingNumber = (order: OrderListItemWithDetails) => {
     >((acc, item) => {
       const { trackingNumber, trackingUrl } = item
 
-      acc.push({
-        trackingNumber,
-        trackingUrl,
-      })
+      // Only add if at least one is not null
+      if (trackingNumber !== null || trackingUrl !== null) {
+        acc.push({
+          trackingNumber,
+          trackingUrl,
+        })
+      }
 
       return acc
     }, [])
