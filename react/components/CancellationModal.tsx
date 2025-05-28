@@ -8,9 +8,10 @@ import styles from '../styles/cancellationModal.module.css'
 interface CancellationModalProps {
   allowCancellation?: boolean
   orderId: string
+  shouldShow?: boolean
 }
 
-export const CancellationModal = ({ allowCancellation, orderId }: CancellationModalProps) => {
+export const CancellationModal = ({ allowCancellation, orderId, shouldShow = true }: CancellationModalProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [cancelSuccess, setCancelSuccess] = useState(false)
@@ -58,10 +59,12 @@ export const CancellationModal = ({ allowCancellation, orderId }: CancellationMo
   }
 
   const OpenModalButton = () => (
-    <Button variant="destructive" size="sm" disabled={allowCancellation !== true} onClick={() => setIsOpen(!isOpen)}>
+    <Button variant="destructive" disabled={allowCancellation !== true} onClick={() => setIsOpen(!isOpen)}>
       Cancelar Pedido
     </Button>
   )
+
+  if (!shouldShow) return null
 
   return (
     <>

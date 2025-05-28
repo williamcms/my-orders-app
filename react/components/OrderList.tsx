@@ -17,6 +17,7 @@ import { getOrderStatus } from '../utils/getOrderStatus'
 import { formatCurrency, formatDate } from '../utils/formats'
 import { getTrackingNumber } from '../utils/getTrackingNumber'
 import type { MyPageProps } from '../types'
+import { CancellationModal } from './CancellationModal'
 import styles from '../styles/index.module.css'
 
 type Props = {
@@ -282,21 +283,14 @@ const OrderList = ({ history }: Props) => {
                       </div>
 
                       <div className={styles.orderActions}>
-                        <Button
-                          variant="outline"
-                          className={styles.actionButton}
-                          onClick={() => addToCart(order.details?.items)}
-                        >
+                        <Button variant="outline" onClick={() => addToCart(order.details?.items)}>
                           <RefreshCwIcon className={styles.icon_marginRight} />
                           Pedir novamente
                         </Button>
-                        <Button
-                          variant="outline"
-                          className={styles.actionButton}
-                          onClick={() => history.push(`/myOrders/${order.orderId}`)}
-                        >
+                        <Button variant="outline" onClick={() => history.push(`/myOrders/${order.orderId}`)}>
                           Ver detalhes do pedido
                         </Button>
+                        <CancellationModal orderId={order.orderId} shouldShow={order.details?.allowCancellation} />
                       </div>
                     </div>
                   </CardContent>
