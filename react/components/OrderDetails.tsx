@@ -136,7 +136,7 @@ const OrderDetails = ({ match }: Props) => {
       <div className={styles.orderDetailsGrid}>
         <Card className={styles.card}>
           <CardHeader className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>Endereço de Entrega</h2>
+            <h2 className={styles.cardTitle}>Endereço</h2>
           </CardHeader>
           <CardContent className={styles.cardContentGrid}>
             <div className={styles.cardInnerContent}>
