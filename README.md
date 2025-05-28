@@ -69,10 +69,9 @@ This app comes with the following dependencies:
 - VTEX Order Items
 - VTEX Pixel Manager
 
+> **Important:**
+> The app includes the `pixel` builder that is used solely to hide the previous native version of the My Orders app. This ensures that only the enhanced version provided by this app is visible to customers.
+
 ## Support
 
 For issues and feature requests, please open an issue in this repository or contact our support team.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
