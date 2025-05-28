@@ -675,7 +675,7 @@ export interface SLA {
 
 export interface PickupStoreInfo {
   additionalInfo: string | null
-  address: unknown | null
+  address: ShippingAddress | null
   dockId: string | null
   friendlyName: string | null
   isPickupStore: boolean

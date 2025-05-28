@@ -4,16 +4,19 @@ import axios from 'axios'
 import type { MyPageProps } from '../types'
 import type { OrderListItemWithDetails, OrderListResponse } from '../../node/types/orderList'
 import { Button } from './ui/button'
-import { formatAddress, formatCurrency, formatDate } from '../utils/formats'
+import { formatAddress, formatCurrency, formatDate, formatShippingEstimate } from '../utils/formats'
 import { Badge } from './ui/badge'
 import { CardHeader, CardContent, Card } from './ui/card'
-import { PackageIcon } from './ui/svg'
+import { CalendarIcon, PackageIcon, PhoneIcon, StoreIcon } from './ui/svg'
 import { Skeleton } from './ui/skeleton'
 import { getPaymentMethodName } from '../utils/getPaymentMethodName'
 import { Tooltip } from './ui/tooltip'
 import { getOrderStatus } from '../utils/getOrderStatus'
 import { ConnectorResponses } from './ConnectorResponses'
+import { extractPhoneNumber } from '../utils/getPhoneNumber'
+import { CancellationModal } from './CancellationModal'
 import styles from '../styles/index.module.css'
+import { getPickupItems } from '../utils/getPickupItems'
 
 type Props = {
   _notUsed?: null
@@ -28,6 +31,8 @@ const OrderDetails = ({ match }: Props) => {
   const [order, setOrder] = useState<OrderListItemWithDetails | undefined>()
 
   const packageList = order?.details?.packageAttachment.packages ?? []
+  const pickupItems = getPickupItems(order?.details?.shippingData?.logisticsInfo)
+  const orderStatus = getOrderStatus(order)
 
   useEffect(() => {
     axios
@@ -118,6 +123,16 @@ const OrderDetails = ({ match }: Props) => {
 
   return (
     <div className={styles.container}>
+      {order?.orderId && (
+        <div className={styles.headerContainer}>
+          <div className={styles.headerInfo}>
+            <span className={styles.orderSubtitle}>{formatDate(order.creationDate, 'long')}</span>
+            <span> • </span>
+            <Badge variant={orderStatus.variant}>{orderStatus.label}</Badge>
+          </div>
+          <CancellationModal allowCancellation={order.details?.allowCancellation} orderId={order?.orderId} />
+        </div>
+      )}
       <div className={styles.orderDetailsGrid}>
         <Card className={styles.card}>
           <CardHeader className={styles.cardHeader}>
@@ -221,7 +236,7 @@ const OrderDetails = ({ match }: Props) => {
             <div className={styles.orderSummaryContent}>
               <div className={styles.summaryItem}>
                 <span className={styles.textMuted}>Status:</span>
-                <span className={styles.summaryValue}>{getOrderStatus(order).label}</span>
+                <span className={styles.summaryValue}>{orderStatus.label}</span>
               </div>
               <div className={styles.summaryItem}>
                 <span className={styles.textMuted}>Data do pedido:</span>
@@ -243,96 +258,229 @@ const OrderDetails = ({ match }: Props) => {
           </CardContent>
         </Card>
 
-        <Card className={`${styles.card} ${styles.fullLine} ${packageList.length === 0 ? styles.hidden : ''}`}>
-          <CardHeader className={styles.cardHeader}>
-            <div className={styles.cardTitleWithIcon}>
-              <PackageIcon className={styles.icon_marginRight} />
-              <h2 className={styles.cardTitle}>Pacotes de Entrega</h2>
-            </div>
-          </CardHeader>
-          <CardContent className={styles.cardContent}>
-            <div className={styles.packagesList}>
-              {packageList.map((packageMain, index) => (
-                <div key={index} className={styles.packageItem}>
-                  <div className={styles.packageHeader}>
-                    <h3 className={styles.packageTitle}>Pacote {index + 1}</h3>
-                    <Badge variant="outline">{packageMain.courier ?? 'Transportadora'}</Badge>
-                  </div>
+        {pickupItems.length > 0 && (
+          <Card className={`${styles.card} ${styles.fullLine}`}>
+            <CardHeader className={styles.cardHeader}>
+              <div className={styles.cardTitleWithIcon}>
+                <StoreIcon className={styles.icon_marginRight} />
+                <h2 className={styles.cardTitle}>Itens para Retirada</h2>
+              </div>
+            </CardHeader>
+            <CardContent className={styles.cardContent}>
+              <div className={styles.packagesList}>
+                {pickupItems.map((pickupItem, index) => {
+                  const items = pickupItem.items
+                    .map((pickupOrderItem: { itemId: string }) =>
+                      order?.details?.items.find((i) => i.id === pickupOrderItem.itemId)
+                    )
+                    .filter(Boolean)
 
-                  <div className={styles.packageDetails}>
-                    <div className={styles.packageInfo}>
-                      <Tooltip label={packageMain.invoiceKey}>
-                        <div className={styles.packageInfoItem}>
-                          <span className={styles.textMuted}>Nota fiscal:</span>
-                          <span>{packageMain.invoiceNumber}</span>
+                  const storeInfo = pickupItem.pickupStoreInfo
+                  const phoneNumber = extractPhoneNumber(storeInfo.address?.complement)
+
+                  return (
+                    <div key={index} className={styles.packageItem}>
+                      <div className={styles.packageHeader}>
+                        <h3 className={styles.packageTitle}>{storeInfo.friendlyName ?? 'Loja para Retirada'}</h3>
+                        <Badge variant="success">Retirada na Loja</Badge>
+                      </div>
+
+                      <div className={styles.packageDetails}>
+                        <div className={styles.packageInfo}>
+                          <div className={styles.packageInfoItem}>
+                            <span className={styles.textMuted}>Endereço:</span>
+                            <span>
+                              {storeInfo.address
+                                ? `${storeInfo.address.street}, ${storeInfo.address.number}, ${storeInfo.address.neighborhood}`
+                                : 'Endereço não disponível'}
+                            </span>
+                          </div>
+                          <div className={styles.packageInfoItem}>
+                            <span className={styles.textMuted}>Cidade/Estado:</span>
+                            <span>
+                              {storeInfo.address
+                                ? `${storeInfo.address.city} - ${storeInfo.address.state}`
+                                : 'Localização não disponível'}
+                            </span>
+                          </div>
+                          <div className={styles.packageInfoItem}>
+                            <span className={styles.textMuted}>Prazo de retirada:</span>
+                            <span>
+                              {pickupItem.shippingEstimate
+                                ? formatShippingEstimate(pickupItem.shippingEstimate)
+                                : 'Não disponível'}
+                            </span>
+                          </div>
+                          <div className={styles.packageInfoItem}>
+                            <span className={styles.textMuted}>Contato:</span>
+                            <span>{phoneNumber ?? 'Não disponível'}</span>
+                          </div>
+                          <div className={`${styles.packageInfoItem} ${styles.fullLine}`}>
+                            <span className={styles.textMuted}>Complemento:</span>
+                            <span>{storeInfo.address?.complement ?? 'Não disponível'}</span>
+                          </div>
                         </div>
-                      </Tooltip>
-                      {packageMain.trackingNumber && (
+
+                        {storeInfo.additionalInfo && (
+                          <div className={styles.packageInfoItem}>
+                            <span className={styles.textMuted}>Informações adicionais:</span>
+                            <span>{storeInfo.additionalInfo}</span>
+                          </div>
+                        )}
+
+                        <div className={styles.packageItems}>
+                          <h4 className={styles.packageItemsTitle}>Itens para retirada:</h4>
+
+                          {items.map((item) => (
+                            <div className={styles.packageItemDetail} key={item?.name}>
+                              <span>{item?.name}</span>
+                              <span className={styles.textMuted}>Qtd: {item?.quantity}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {pickupItem.shippingEstimateDate && (
+                          <div className={styles.trackingStatus}>
+                            <h4 className={styles.trackingTitle}>Disponível para retirada:</h4>
+                            <div className={styles.trackingEvent}>
+                              <div className={styles.trackingDescription}>
+                                <div className="flex items-center">
+                                  <CalendarIcon className={styles.icon_marginRight} />
+                                  <span>Disponível a partir de {formatDate(pickupItem.shippingEstimateDate)}</span>
+                                </div>
+                              </div>
+                              <div className={styles.textMuted}>
+                                Quando o pedido estiver pronto para retirada você receberá um e-mail com o código para
+                                retirada.
+                                <br />
+                                Apresente um documento com foto e o número do pedido.
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className={styles.packageActions}>
+                          {storeInfo.address?.geoCoordinates && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              to={`https://www.google.com/maps/search/?api=1&query=${storeInfo.address.geoCoordinates[1]},${storeInfo.address.geoCoordinates[0]}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              isLink
+                            >
+                              Ver no Mapa
+                            </Button>
+                          )}
+                          {phoneNumber && (
+                            <Button variant="outline" size="sm" to={`tel:${phoneNumber}`} isLink>
+                              <PhoneIcon className={styles.icon_marginRight} />
+                              Ligar para Loja
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {packageList.length > 0 && (
+          <Card className={`${styles.card} ${styles.fullLine}`}>
+            <CardHeader className={styles.cardHeader}>
+              <div className={styles.cardTitleWithIcon}>
+                <PackageIcon className={styles.icon_marginRight} />
+                <h2 className={styles.cardTitle}>Pacotes de Entrega</h2>
+              </div>
+            </CardHeader>
+            <CardContent className={styles.cardContent}>
+              <div className={styles.packagesList}>
+                {packageList.map((packageMain, index) => (
+                  <div key={index} className={styles.packageItem}>
+                    <div className={styles.packageHeader}>
+                      <h3 className={styles.packageTitle}>Pacote {index + 1}</h3>
+                      <Badge variant="outline">{packageMain.courier ?? 'Transportadora'}</Badge>
+                    </div>
+
+                    <div className={styles.packageDetails}>
+                      <div className={styles.packageInfo}>
+                        <Tooltip label={packageMain.invoiceKey}>
+                          <div className={styles.packageInfoItem}>
+                            <span className={styles.textMuted}>Nota fiscal:</span>
+                            <span>{packageMain.invoiceNumber}</span>
+                          </div>
+                        </Tooltip>
+                        {packageMain.trackingNumber && (
+                          <div className={styles.packageInfoItem}>
+                            <span className={styles.textMuted}>Rastreamento:</span>
+                            <span>{packageMain.trackingNumber}</span>
+                          </div>
+                        )}
                         <div className={styles.packageInfoItem}>
-                          <span className={styles.textMuted}>Rastreamento:</span>
-                          <span>{packageMain.trackingNumber}</span>
+                          <span className={styles.textMuted}>Data de emissão:</span>
+                          <span>{formatDate(packageMain.issuanceDate)}</span>
+                        </div>
+                        <div className={styles.packageInfoItem}>
+                          <span className={styles.textMuted}>Valor da nota:</span>
+                          <span>R$ {formatCurrency(packageMain.invoiceValue)}</span>
+                        </div>
+                      </div>
+
+                      <div className={styles.packageItems}>
+                        <h4 className={styles.packageItemsTitle}>Itens neste pacote:</h4>
+                        {packageMain.items.map((packageItem) => {
+                          return (
+                            <div key={packageItem.itemIndex} className={styles.packageItemDetail}>
+                              <span>{packageItem.description}</span>
+                              <span className={styles.textMuted}>Qtd: {packageItem.quantity}</span>
+                              <span className={styles.textMuted}>R$ {formatCurrency(packageItem.price)}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {packageMain.courierStatus?.data && packageMain.courierStatus?.data.length > 0 && (
+                        <div className={styles.trackingStatus}>
+                          <h4 className={styles.trackingTitle}>Status de rastreamento:</h4>
+                          <div className={styles.trackingEvent}>
+                            <div className={styles.trackingDescription}>
+                              {packageMain.courierStatus?.data?.[0].description}
+                            </div>
+                            <div className={styles.textMuted}>
+                              {packageMain.courierStatus?.data?.[0].city}, {packageMain.courierStatus?.data?.[0].state}
+                              {' - '}
+                              {formatDate(packageMain.courierStatus?.data?.[0].lastChange)}
+                            </div>
+                          </div>
                         </div>
                       )}
-                      <div className={styles.packageInfoItem}>
-                        <span className={styles.textMuted}>Data de emissão:</span>
-                        <span>{formatDate(packageMain.issuanceDate)}</span>
-                      </div>
-                      <div className={styles.packageInfoItem}>
-                        <span className={styles.textMuted}>Valor da nota:</span>
-                        <span>R$ {formatCurrency(packageMain.invoiceValue)}</span>
-                      </div>
-                    </div>
 
-                    <div className={styles.packageItems}>
-                      <h4 className={styles.packageItemsTitle}>Itens neste pacote:</h4>
-                      {packageMain.items.map((packageItem) => {
-                        return (
-                          <div key={packageItem.itemIndex} className={styles.packageItemDetail}>
-                            <span>{packageItem.description}</span>
-                            <span className={styles.textMuted}>Qtd: {packageItem.quantity}</span>
-                            <span className={styles.textMuted}>R$ {formatCurrency(packageItem.price)}</span>
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    {packageMain.courierStatus?.data && packageMain.courierStatus?.data.length > 0 && (
-                      <div className={styles.trackingStatus}>
-                        <h4 className={styles.trackingTitle}>Status de rastreamento:</h4>
-                        <div className={styles.trackingEvent}>
-                          <div className={styles.trackingDescription}>
-                            {packageMain.courierStatus?.data?.[0].description}
-                          </div>
-                          <div className={styles.textMuted}>
-                            {packageMain.courierStatus?.data?.[0].city}, {packageMain.courierStatus?.data?.[0].state} -{' '}
-                            {formatDate(packageMain.courierStatus?.data?.[0].lastChange)}
-                          </div>
+                      {packageMain.trackingUrl && (
+                        <div className={styles.packageActions}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            to={packageMain.trackingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            isLink
+                          >
+                            Rastrear Pacote
+                          </Button>
                         </div>
-                      </div>
-                    )}
-
-                    {packageMain.trackingUrl && (
-                      <div className={styles.packageActions}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          to={packageMain.trackingUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          isLink
-                        >
-                          Rastrear Pacote
-                        </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card className={`${styles.card} ${styles.fullLine} ${packageList.length !== 0 ? styles.hidden : ''}`}>
+        <Card className={`${styles.card} ${styles.fullLine}`}>
           <CardHeader className={styles.cardHeader}>
             <h2 className={styles.cardTitle}>Lista de Produtos</h2>
           </CardHeader>

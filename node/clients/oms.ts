@@ -66,7 +66,6 @@ export default class OMS extends JanusClient {
   }
 
   public async getOrderDetails({ orderId, token }: { orderId: string; token?: string }) {
-    console.log('orderId', orderId)
     try {
       const response = await this.http.getRaw<OrderListItemWithDetails>(this.routes.getOrderDetails(orderId), {
         metric: 'oms-getOrderDetails',

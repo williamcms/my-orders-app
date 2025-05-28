@@ -19,7 +19,9 @@ import { getTrackingNumber } from '../utils/getTrackingNumber'
 import type { MyPageProps } from '../types'
 import styles from '../styles/index.module.css'
 
-type Props = {} & Pick<MyPageProps, 'history'>
+type Props = {
+  _empty?: unknown
+} & Pick<MyPageProps, 'history'>
 
 const OrderList = ({ history }: Props) => {
   const { push } = usePixel()
@@ -28,8 +30,6 @@ const OrderList = ({ history }: Props) => {
   const [loading, setLoading] = useState(true)
   const [orders, setOrders] = useState<OrderListResponse | undefined>()
   const [expandedOrderIds, setExpandedOrderIds] = useState<string[]>([])
-
-  console.log({ orders })
 
   useEffect(() => {
     axios
@@ -150,8 +150,8 @@ const OrderList = ({ history }: Props) => {
                     </div>
 
                     <div className={styles.orderItems}>
-                      {Array.from({ length: Math.floor(Math.random() * 3) + 1 }).map((_, i) => (
-                        <div key={i} className={styles.orderItem}>
+                      {Array.from({ length: Math.floor(Math.random() * 3) + 1 }).map((__, j) => (
+                        <div key={j} className={styles.orderItem}>
                           <div className={styles.orderItemImage}>
                             <Skeleton style={{ width: '4rem', height: '4rem' }} />
                           </div>
@@ -237,6 +237,7 @@ const OrderList = ({ history }: Props) => {
                                     rel="noreferrer"
                                     variant="outline"
                                     isLink
+                                    key={trackingNumber}
                                   >
                                     {trackingNumber}
                                   </Button>
@@ -244,7 +245,7 @@ const OrderList = ({ history }: Props) => {
                               }
 
                               return (
-                                <Button className={styles.trackingNumber} variant="outline">
+                                <Button className={styles.trackingNumber} variant="outline" key={trackingNumber}>
                                   {trackingNumber}
                                 </Button>
                               )
@@ -266,7 +267,7 @@ const OrderList = ({ history }: Props) => {
                                 onError={(e) => {
                                   e.currentTarget.onerror = null
                                   e.currentTarget.src =
-                                    'https://{{account}}.vtexassets.com/_v/public/assets/v1/published/vtex.my-orders-app@3.25.3/public/react/2ea7751cc60e35056a078060add977c2.svg'
+                                    'https://{{acount}}.vtexassets.com/_v/public/assets/v1/published/vtex.my-orders-app@3.25.3/public/react/2ea7751cc60e35056a078060add977c2.svg'
                                 }}
                               />
                             </div>

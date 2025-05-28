@@ -1,12 +1,10 @@
-import { ParsedUrlQuery } from 'querystring'
+import type { Maybe } from '@vtex/api'
 
-import { Maybe } from '@vtex/api'
-
-import { OrderListResponse } from '../types/orderList'
+import type { OrderListResponse } from '../types/orderList'
 
 const BUCKET = 'MY_ORDERS'
 
-const HOUR_INTERVAL = 2
+const HOUR_INTERVAL = 0.25
 /**
  * The time window, in milliseconds, used for rate limiting operations.
  *
@@ -15,7 +13,9 @@ const HOUR_INTERVAL = 2
  */
 const TIMESTAMP_LIMIT = HOUR_INTERVAL * 60 * 60 * 1000
 
-const asString = (v: ParsedUrlQuery, path: string, defaultValue?: unknown): string => {
+type QueryParams = Record<string, undefined | string | string[]>
+
+const asString = (v: QueryParams, path: string, defaultValue?: unknown): string => {
   const str = Array.isArray(v?.[path]) ? v?.[path]?.[0] : (v?.[path] as string)
 
   return str ?? String(defaultValue ?? '')
