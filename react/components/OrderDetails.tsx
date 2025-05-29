@@ -7,7 +7,7 @@ import { Button } from './ui/button'
 import { formatAddress, formatCurrency, formatDate, formatShippingEstimate } from '../utils/formats'
 import { Badge } from './ui/badge'
 import { CardHeader, CardContent, Card } from './ui/card'
-import { CalendarIcon, PackageIcon, PhoneIcon, StoreIcon } from './ui/svg'
+import { CalendarIcon, ClockIcon, CopyIcon, PackageIcon, PhoneIcon, StoreIcon } from './ui/svg'
 import { Skeleton } from './ui/skeleton'
 import { getPaymentMethodName } from '../utils/getPaymentMethodName'
 import { Tooltip } from './ui/tooltip'
@@ -120,6 +120,8 @@ const OrderDetails = ({ match }: Props) => {
   if (!order) {
     return <></>
   }
+
+  console.log({ order })
 
   return (
     <div className={styles.container}>
@@ -319,14 +321,14 @@ const OrderDetails = ({ match }: Props) => {
                             <span className={styles.textMuted}>Complemento:</span>
                             <span>{storeInfo.address?.complement ?? 'Não disponível'}</span>
                           </div>
-                        </div>
 
-                        {storeInfo.additionalInfo && (
-                          <div className={styles.packageInfoItem}>
-                            <span className={styles.textMuted}>Informações adicionais:</span>
-                            <span>{storeInfo.additionalInfo}</span>
-                          </div>
-                        )}
+                          {storeInfo.additionalInfo && (
+                            <div className={`${styles.packageInfoItem} ${styles.fullLine}`}>
+                              <span className={styles.textMuted}>Informações adicionais:</span>
+                              <span>{storeInfo.additionalInfo}</span>
+                            </div>
+                          )}
+                        </div>
 
                         <div className={styles.packageItems}>
                           <h4 className={styles.packageItemsTitle}>Itens para retirada:</h4>
@@ -339,23 +341,82 @@ const OrderDetails = ({ match }: Props) => {
                           ))}
                         </div>
 
-                        {pickupItem.shippingEstimateDate && (
-                          <div className={styles.trackingStatus}>
-                            <h4 className={styles.trackingTitle}>Disponível para retirada:</h4>
-                            <div className={styles.trackingEvent}>
-                              <div className={styles.trackingDescription}>
-                                <div className="flex items-center">
-                                  <CalendarIcon className={styles.icon_marginRight} />
-                                  <span>Disponível a partir de {formatDate(pickupItem.shippingEstimateDate)}</span>
+                        <div className={styles.pickupCodeSection}>
+                          <h4 className={styles.pickupCodeTitle}>Código para retirada:</h4>
+                          <div className={styles.pickupCodeContainer}>
+                            {order.pickupOnStoreCode ? (
+                              <div className={styles.pickupCodeDisplay}>
+                                <div className={styles.pickupCodeValue}>
+                                  <span className={styles.pickupCodeText}>{order.pickupOnStoreCode}</span>
+                                  <Button
+                                    variant="iconOnly"
+                                    className={styles.pickupCodeCopyButton}
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(order.pickupOnStoreCode!)
+                                    }}
+                                    title="Copiar código"
+                                  >
+                                    <CopyIcon />
+                                  </Button>
+                                </div>
+                                <p className={styles.pickupCodeInstructions}>
+                                  Apresente este código na loja para retirar seus produtos.
+                                </p>
+                              </div>
+                            ) : (
+                              <div className={styles.pickupCodePending}>
+                                <div className={styles.pickupCodePendingIcon}>
+                                  <ClockIcon />
+                                </div>
+                                <div className={styles.pickupCodePendingText}>
+                                  <p className={styles.pickupCodePendingTitle}>Código em preparação</p>
+                                  <p className={styles.pickupCodePendingDescription}>
+                                    Você receberá um e-mail com o código assim que os produtos estiverem disponíveis
+                                    para retirada.
+                                  </p>
                                 </div>
                               </div>
-                              <div className={styles.textMuted}>
-                                Quando o pedido estiver pronto para retirada você receberá um e-mail com o código para
-                                retirada.
-                                <br />
-                                Apresente um documento com foto e o número do pedido.
-                              </div>
-                            </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {pickupItem.shippingEstimateDate && (
+                          <div className={styles.trackingStatus}>
+                            {order.details?.cancellationData ? (
+                              <>
+                                <h4 className={styles.trackingTitle}>Pedido cancelado</h4>
+                                <div className={styles.trackingEventCancelled}>
+                                  <div className={styles.trackingDescription}>
+                                    <div className="flex items-center">
+                                      <CalendarIcon className={styles.icon_marginRight} />
+                                      <span>
+                                        Cancelado em {formatDate(order.details.cancellationData.CancellationDate)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className={styles.smallText}>
+                                    Este pedido foi cancelado e não estará mais disponível para entrega ou retirada.
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <h4 className={styles.trackingTitle}>Disponível para retirada:</h4>
+                                <div className={styles.trackingEvent}>
+                                  <div className={styles.trackingDescription}>
+                                    <div className="flex items-center">
+                                      <CalendarIcon className={styles.icon_marginRight} />
+                                      <span>Disponível a partir de {formatDate(pickupItem.shippingEstimateDate)}</span>
+                                    </div>
+                                  </div>
+                                  <div className={styles.smallText}>
+                                    Assim que o pedido estiver disponível para retirada, você receberá um e-mail com o
+                                    código necessário.
+                                    <br />O código também será exibido na seção acima.
+                                  </div>
+                                </div>
+                              </>
+                            )}
                           </div>
                         )}
 

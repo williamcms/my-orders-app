@@ -1,6 +1,6 @@
 {
   "name": "my-orders-app",
-  "vendor": "{{vendor}}",
+  "vendor": "{{account}}",
   "version": "0.0.0",
   "title": "Custom My Orders Page for My Account",
   "builders": {
@@ -20,6 +20,19 @@
     "vtex.order-items": "0.x"
   },
   "policies": [
+    {
+      "name": "POWER_USER_DS"
+    },
+    {
+      "name": "ADMIN_DS"
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "api.vtex.com",
+        "path": "/dataentities/*"
+      }
+    },
     {
       "name": "outbound-access",
       "attrs": {
@@ -61,5 +74,9 @@
   "scripts": {
     "postreleasy": "vtex publish --verbose"
   },
-  "$schema": "https://raw.githubusercontent.com/vtex/node-vtex-api/master/gen/manifest.schema"
+  "$schema": "https://raw.githubusercontent.com/vtex/node-vtex-api/master/gen/manifest.schema",
+  "author": {
+    "name": "William Di Biasi Bogik",
+    "url": "https://github.com/williamcms/"
+  }
 }

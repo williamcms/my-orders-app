@@ -42,7 +42,7 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
   const {
     state: { orderList, orderDetails },
     vtex: { logger, storeUserAuthToken },
-    clients: { oms, vbase },
+    clients: { oms, vbase, masterdata },
   } = ctx
 
   if (!storeUserAuthToken) return
@@ -51,8 +51,6 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
 
   const typeSuffix = orderDetails ? '_PAGE' : '_LIST'
   const orderSuffix = orderDetails ? `_${orderDetails.orderId}` : ''
-
-  console.log(BUCKET + typeSuffix, hash + orderSuffix)
 
   const cachedResponse = await vbase.getJSON<Maybe<OrderListResponse>>(BUCKET + typeSuffix, hash + orderSuffix, true)
 
@@ -104,17 +102,32 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
     })
   }
 
+  const pickupOnStoreCode = async (orderId: string) => {
+    const response = await masterdata.searchDocuments<{ codigo_retirada: string }>({
+      dataEntity: 'CR',
+      fields: ['codigo_retirada'],
+      where: `id_pedido=${orderId}`,
+      pagination: { page: 1, pageSize: 5 },
+    })
+
+    const [data] = response ?? []
+
+    return data?.codigo_retirada ?? null
+  }
+
   const orderListWithDetails = orderDetails
     ? [
         {
           ...orderDetails,
           details: await oms.getOrder({ orderId: orderDetails.orderId }),
+          pickupOnStoreCode: await pickupOnStoreCode(orderDetails.orderId),
         },
       ]
     : await Promise.all(
         orderList.list.map(async (order) => ({
           ...order,
           details: await oms.getOrder({ orderId: order.orderId }),
+          pickupOnStoreCode: await pickupOnStoreCode(order.orderId),
         }))
       )
 
@@ -175,6 +188,7 @@ export const listOrders = async (ctx: Context, next: () => Promise<unknown>) => 
     const error = typeof orders.error === 'string' ? JSON.parse(orders.error) : orders.error
 
     let errorCode = 500
+
     if ('message' in error) {
       const match = (error.message as string).match(/\d{3}/)
 
@@ -223,6 +237,7 @@ export const getOrderDetails = async (ctx: Context, next: () => Promise<unknown>
     const error = typeof orders.error === 'string' ? JSON.parse(orders.error) : orders.error
 
     let errorCode = 500
+
     if ('message' in error) {
       const match = (error.message as string).match(/\d{3}/)
 

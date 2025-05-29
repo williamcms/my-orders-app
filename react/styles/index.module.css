@@ -205,7 +205,7 @@
   gap: 1rem;
 }
 
-.trackingInfo {
+.smallText {
   font-size: 0.875rem;
 }
 
@@ -407,6 +407,18 @@
 
 .buttonWarning:hover {
   background-color: #ca8a04;
+}
+
+.buttonIconOnly {
+  background-color: transparent;
+  width: auto !important;
+  height: 2.5rem;
+  padding: 0 1rem;
+}
+
+.buttonIconOnly:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
 /* Button Sizes */
@@ -785,6 +797,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
 }
 
 .trackingEvent {
@@ -795,6 +808,16 @@
   background: #f7196330;
   border-radius: 0.75rem;
   box-shadow: 0 4px 6px -1px #07112750;
+}
+
+.trackingEventCancelled {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  background: #f8b6b6;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(248, 182, 182, 0.3);
 }
 
 .trackingDescription {
@@ -812,4 +835,148 @@
 .packageActions a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Pickup Code Styles */
+.pickupCodeSection {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 153, 0, 0.03) 100%);
+  border: 1px solid rgba(255, 153, 0, 0.2);
+  border-radius: 0.75rem;
+}
+
+.pickupCodeTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pickupCodeContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pickupCodeDisplay {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pickupCodeValue {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #d21a52 0%, #a1163e 100%);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(210, 26, 82, 0.3);
+}
+
+.pickupCodeText {
+  font-family: "Courier New", monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.1em;
+  flex: 1;
+}
+
+.pickupCodeCopyButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 0.375rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pickupCodeCopyButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.pickupCodeCopyButton:active {
+  transform: scale(0.95);
+}
+
+.pickupCodeInstructions {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.pickupCodePending {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #f8fafc 0%, rgba(148, 163, 184, 0.05) 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+.pickupCodePendingIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 0.5rem;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.pickupCodePendingText {
+  flex: 1;
+}
+
+.pickupCodePendingTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.5rem 0;
+}
+
+.pickupCodePendingDescription {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Responsive adjustments for pickup code */
+@media (max-width: 640px) {
+  .pickupCodeValue {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .pickupCodeText {
+    font-size: 1.125rem;
+  }
+
+  .pickupCodeCopyButton {
+    align-self: flex-end;
+  }
+
+  .pickupCodePending {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .pickupCodePendingIcon {
+    align-self: flex-start;
+  }
 }

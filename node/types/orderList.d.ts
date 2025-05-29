@@ -1,4 +1,4 @@
-import { OrderListItemDetails } from './orderDetails'
+import type { OrderListItemDetails } from './orderDetails'
 
 export interface OrderListItem {
   orderId: string
@@ -70,6 +70,7 @@ export interface OrderListItem {
 
 export interface OrderListItemWithDetails extends OrderListItem {
   details?: OrderListItemDetails
+  pickupOnStoreCode?: string | null
 }
 
 export interface OrderListItemProduct {

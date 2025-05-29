@@ -1,9 +1,20 @@
 import React from 'react'
-import styles from '../../styles/index.module.css'
 import { Link } from 'vtex.render-runtime'
 
+import styles from '../../styles/index.module.css'
+
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'orange' | 'success' | 'warning'
+  variant?:
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link'
+    | 'orange'
+    | 'success'
+    | 'warning'
+    | 'iconOnly'
   size?: 'default' | 'sm' | 'lg' | 'icon'
   isLink?: boolean
   to?: string
