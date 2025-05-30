@@ -30,9 +30,18 @@ const OrderDetails = ({ match }: Props) => {
   const [loading, setLoading] = useState(true)
   const [order, setOrder] = useState<OrderListItemWithDetails | undefined>()
 
+  const hasShippingAddress =
+    (
+      order?.details?.shippingData?.availableAddresses.filter((address) => {
+        return address.addressType !== 'pickup'
+      }) ?? []
+    )?.length > 0
+
   const packageList = order?.details?.packageAttachment.packages ?? []
   const pickupItems = getPickupItems(order?.details?.shippingData?.logisticsInfo)
   const orderStatus = getOrderStatus(order)
+
+  const hasShipping = hasShippingAddress && packageList.length > 0
 
   useEffect(() => {
     axios
@@ -449,7 +458,7 @@ const OrderDetails = ({ match }: Props) => {
           </Card>
         )}
 
-        {packageList.length > 0 && (
+        {hasShipping && (
           <Card className={`${styles.card} ${styles.fullLine}`}>
             <CardHeader className={styles.cardHeader}>
               <div className={styles.cardTitleWithIcon}>
