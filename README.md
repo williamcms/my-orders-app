@@ -75,3 +75,21 @@ This app comes with the following dependencies:
 ## Support
 
 For issues and feature requests, please open an issue in this repository or contact our support team.
+
+## ⚠️ Important Configuration Note: allowMultipleDeliveries
+
+This application assumes that the **`allowMultipleDeliveries`** setting is **disabled** in your VTEX account's Checkout configuration.
+
+If your store enables **multiple deliveries** (i.e., **`allowMultipleDeliveries` set to `true`**), **additional configuration may be required** to ensure proper functionality and display within this app. When multiple delivery options are available (e.g., pickup on store for one item and regular delivery for another), VTEX **automatically splits deliveries** for stores using **Checkout V6**.
+
+The current layout of the Enhanced My Orders App **may not fully support** the complexities introduced by these automatic delivery splits, such as:
+
+- Different delivery methods within a single order.
+- Multiple packages created from a single cart.
+- Diverging delivery estimates and tracking information per package.
+
+Please review the official VTEX documentation for more details:  
+👉 [VTEX - Order and Delivery Split](https://help.vtex.com/pt/tutorial/divisao-de-pedidos-e-divisao-de-entregas--jQvzA6QgSd51e2p6bthoV)
+
+> **Recommendation:**  
+> If your store has or plans to enable `allowMultipleDeliveries`, carefully test the app's behavior with complex orders involving multiple delivery methods. Depending on your findings, further customization or enhancements to this app's layout may be necessary to provide an optimal user experience.
