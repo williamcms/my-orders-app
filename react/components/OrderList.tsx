@@ -16,7 +16,7 @@ import { adjustItemsForEvent } from '../utils/adjustItemsForEvent'
 import { getOrderStatus } from '../utils/getOrderStatus'
 import { formatCurrency, formatDate } from '../utils/formats'
 import { getTrackingNumber } from '../utils/getTrackingNumber'
-import type { MyPageProps } from '../types'
+import type { ErrorResponse, MyPageProps } from '../types'
 import { CancellationModal } from './CancellationModal'
 import styles from '../styles/index.module.css'
 
@@ -30,6 +30,8 @@ const OrderList = ({ history }: Props) => {
 
   const [loading, setLoading] = useState(true)
   const [orders, setOrders] = useState<OrderListResponse | undefined>()
+  const [error, setError] = useState<ErrorResponse>()
+  const [retry, setRetry] = useState<unknown>()
   const [expandedOrderIds, setExpandedOrderIds] = useState<string[]>([])
 
   useEffect(() => {
@@ -44,10 +46,14 @@ const OrderList = ({ history }: Props) => {
         setLoading(false)
         setOrders(response.data)
       })
-      .catch((error) => {
-        console.error('Error fetching order:', error)
+      .catch((e: ErrorResponse) => {
+        console.error('Error fetching order:', e)
+        setLoading(false)
+        setError(e)
       })
-  }, [])
+
+    console.info('Retry used to re-fetch orders:', { retry })
+  }, [retry])
 
   const toggleOrderExpansion = (orderId: string) => {
     if (expandedOrderIds.includes(orderId)) {
@@ -103,6 +109,25 @@ const OrderList = ({ history }: Props) => {
     })
   }
 
+  if (error && !orders && !loading) {
+    return (
+      <div className={styles.errorContainer}>
+        <h2 className={styles.errorTitle}>Erro ao carregar a lista de pedidos</h2>
+        <span className={styles.errorMessage}>{error.message}</span>
+
+        <Button
+          variant="default"
+          onClick={() => {
+            setRetry(Date.now() + Math.random())
+            setLoading(true)
+          }}
+        >
+          Tentar novamente
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <div>
       {loading ? (
@@ -145,7 +170,7 @@ const OrderList = ({ history }: Props) => {
                     <div className={styles.orderShipping}>
                       <Skeleton style={{ width: '5.5625rem', height: '1rem' }} />
 
-                      <div className={styles.trackingInfo}>
+                      <div className={styles.smallText}>
                         <Skeleton style={{ width: '5.5625rem', height: '1rem' }} />
                       </div>
                     </div>
@@ -226,7 +251,7 @@ const OrderList = ({ history }: Props) => {
                             `Entrega até ${formatDate(order.ShippingEstimatedDateMax, '2-digit')}`}
                         </div>
                         {Boolean(trackinInfo.length) && (
-                          <div className={styles.trackingInfo}>
+                          <div className={styles.smallText}>
                             <span className={styles.textMuted}>Número de rastreio: </span>
                             {trackinInfo.map(({ trackingNumber, trackingUrl }) => {
                               if (trackingUrl) {

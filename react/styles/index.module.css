@@ -978,3 +978,26 @@
     align-self: flex-start;
   }
 }
+
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+  text-align: center;
+  height: 50dvh;
+}
+
+.errorContainer .errorTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.errorContainer .errorMessage {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+}
