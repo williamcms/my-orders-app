@@ -3,9 +3,9 @@ import { LRUCache, method, Service } from '@vtex/api'
 
 import { Clients } from './clients'
 import { getOrder, getOrderDetails, listOrders } from './middlewares/oms'
-import { OrderListItemWithDetails, OrderListResponse } from './types/orderList'
+import type { OrderListItemWithDetails, OrderListResponse } from './types/orderList'
 
-const TIMEOUT_MS = 800
+const TIMEOUT_MS = 5000
 
 // Create a LRU memory cache for the Status client.
 // The 'max' parameter sets the size of the cache.

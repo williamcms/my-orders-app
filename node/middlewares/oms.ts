@@ -88,7 +88,7 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
   }
 
   if (cachedResponse?.list.length) {
-    vbase.deleteFile(BUCKET, hash)
+    vbase.deleteFile(BUCKET + typeSuffix, hash + orderSuffix)
 
     logger.info({
       log: 'Cache entry deleted due to expired time window',
@@ -182,35 +182,57 @@ export const listOrders = async (ctx: Context, next: () => Promise<unknown>) => 
   const page = asString(params, 'page', 1)
   const limit = asString(params, 'limit', 10)
 
-  const orders = await oms.listOrders({ page, limit, token: storeUserAuthToken })
+  try {
+    const orders = await oms.listOrders({ page, limit, token: storeUserAuthToken })
 
-  if ('error' in orders) {
-    const error = typeof orders.error === 'string' ? JSON.parse(orders.error) : orders.error
+    if ('error' in orders) {
+      const error = typeof orders.error === 'string' ? JSON.parse(orders.error) : orders.error
 
-    let errorCode = 500
+      let errorCode = 500
+      let errorMessage = 'Internal server error'
 
-    if ('message' in error) {
-      const match = (error.message as string).match(/\d{3}/)
+      if ('message' in error) {
+        const match = (error.message as string).match(/\d{3}/)
 
-      if (match) {
-        errorCode = parseInt(match[0], 10)
+        if (match) {
+          errorCode = parseInt(match[0], 10)
+        }
+
+        errorMessage = error.message as string
       }
+
+      logger.error({
+        error: errorMessage,
+        errorCode,
+        message: 'listOrders-api-failed',
+      })
+
+      ctx.status = errorCode
+      ctx.body = { message: errorMessage }
+
+      return
     }
 
+    ctx.state.orderList = orders
+  } catch (err) {
+    const error = err as Error
+    const isTimeout = error.message?.includes('timeout')
+
     logger.error({
-      error,
-      errorCode,
-      details: orders.error,
-      message: 'getOrderDetails-api-failed',
+      error: {
+        message: error.message,
+        name: error.name,
+      },
+      message: 'listOrders-api-failed',
     })
 
-    ctx.status = errorCode
-    ctx.body = error
+    ctx.status = isTimeout ? 504 : 500
+    ctx.body = {
+      message: isTimeout ? 'Request timeout' : 'Internal server error',
+    }
 
     return
   }
-
-  ctx.state.orderList = orders
 
   await next()
 }
