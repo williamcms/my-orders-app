@@ -1,5 +1,4 @@
-import type { InstanceOptions, IOContext } from '@vtex/api'
-import { JanusClient } from '@vtex/api'
+import { type InstanceOptions, type IOContext, JanusClient } from '@vtex/api'
 
 import type { OrderListItemWithDetails, OrderListResponse } from '../types/orderList'
 import type { OrderListItemDetails } from '../types/orderDetails'

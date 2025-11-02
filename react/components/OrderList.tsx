@@ -1,23 +1,24 @@
-import axios from 'axios'
 import React, { useEffect, useState } from 'react'
-import { usePixel } from 'vtex.pixel-manager'
 import type { EventName } from 'vtex.pixel-manager/react/PixelEventTypes'
 import { useOrderItems } from 'vtex.order-items/OrderItems'
+import { usePixel } from 'vtex.pixel-manager'
+import axios from 'axios'
 
 import type { OrderListItemWithDetails, OrderListResponse } from '../../node/types/orderList'
-import { Skeleton } from './ui/skeleton'
-import { Button } from './ui/button'
-import { Card, CardContent, CardHeader } from './ui/card'
-import { Badge } from './ui/badge'
-import { ChevronRightIcon, RefreshCwIcon } from './ui/svg'
-import { Tooltip } from './ui/tooltip'
-import type { OrderItem } from '../../node/types/orderDetails'
+import { ChevronRightIcon, RefreshCwIcon, ImagePlaceholder } from './ui/svg'
 import { adjustItemsForEvent } from '../utils/adjustItemsForEvent'
-import { getOrderStatus } from '../utils/getOrderStatus'
-import { formatCurrency, formatDate } from '../utils/formats'
+import type { OrderItem } from '../../node/types/orderDetails'
 import { getTrackingNumber } from '../utils/getTrackingNumber'
+import { formatCurrency, formatDate } from '../utils/formats'
+import { Card, CardContent, CardHeader } from './ui/card'
 import type { ErrorResponse, MyPageProps } from '../types'
+import { getOrderStatus } from '../utils/getOrderStatus'
 import { CancellationModal } from './CancellationModal'
+import { Skeleton } from './ui/skeleton'
+import { Tooltip } from './ui/tooltip'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
+
 import styles from '../styles/index.module.css'
 
 type Props = {
@@ -28,6 +29,7 @@ const OrderList = ({ history }: Props) => {
   const { push } = usePixel()
   const { addItems } = useOrderItems()
 
+  const [imageError, setImageError] = useState(false)
   const [loading, setLoading] = useState(true)
   const [orders, setOrders] = useState<OrderListResponse | undefined>()
   const [error, setError] = useState<ErrorResponse>()
@@ -284,18 +286,18 @@ const OrderList = ({ history }: Props) => {
                         {order.details?.items.map((item) => (
                           <div key={item.id} className={styles.orderItem}>
                             <div className={styles.orderItemImage}>
-                              <img
-                                src={item.imageUrl}
-                                alt={item.name}
-                                width={64}
-                                height={64}
-                                className={styles.itemImage}
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null
-                                  e.currentTarget.src =
-                                    'https://{{acount}}.vtexassets.com/_v/public/assets/v1/published/vtex.my-orders-app@3.25.3/public/react/2ea7751cc60e35056a078060add977c2.svg'
-                                }}
-                              />
+                              {imageError ? (
+                                <div className={styles.imagePlaceholder}>
+                                  <ImagePlaceholder />
+                                </div>
+                              ) : (
+                                <img
+                                  src={item.imageUrl}
+                                  alt={item.name}
+                                  className={styles.itemImage}
+                                  onError={() => setImageError(true)}
+                                />
+                              )}
                             </div>
                             <div className={styles.orderItemDetails}>
                               <div className={styles.itemName}>{item.name}</div>
@@ -315,7 +317,11 @@ const OrderList = ({ history }: Props) => {
                         <Button variant="outline" onClick={() => history.push(`/myOrders/${order.orderId}`)}>
                           Ver detalhes do pedido
                         </Button>
-                        <CancellationModal orderId={order.orderId} shouldShow={order.details?.allowCancellation} />
+                        <CancellationModal
+                          orderId={order.orderId}
+                          shouldShow={order.details?.allowCancellation}
+                          history={order?.details?.cancellationRequests}
+                        />
                       </div>
                     </div>
                   </CardContent>

@@ -9,11 +9,14 @@ export interface GroupedPickupLogistic extends Omit<LogisticsInfo, 'itemIndex' |
   items: PickupItem[]
 }
 
-export const getPickupItems = (logisticsInfo?: LogisticsInfo[]): GroupedPickupLogistic[] => {
+export const getPickupItems = (
+  logisticsInfo?: LogisticsInfo[],
+  filter: string = 'pickup-in-point'
+): GroupedPickupLogistic[] => {
   if (!logisticsInfo) return []
 
   // Only pickup-in-point items
-  const pickupLogistics = logisticsInfo.filter((logistic) => logistic.selectedDeliveryChannel === 'pickup-in-point')
+  const pickupLogistics = logisticsInfo.filter((logistic) => logistic.selectedDeliveryChannel === filter)
 
   // Group by selectedSla, lockTTL, shippingEstimate
   const grouped: Record<string, GroupedPickupLogistic> = {}

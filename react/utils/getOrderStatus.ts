@@ -19,6 +19,7 @@ export const getOrderStatus = (
       return { label: 'Cancelamento solicitado', variant: 'warning', tooltip: '' }
 
     case 'canceled':
+    case 'cancel':
       return { label: 'Cancelado', variant: 'destructive', tooltip: formatDate(cancellationDate) }
 
     case 'invoiced':

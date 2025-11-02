@@ -1,22 +1,31 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 
-import type { MyPageProps } from '../types'
-import type { OrderListItemWithDetails, OrderListResponse } from '../../node/types/orderList'
-import { Button } from './ui/button'
-import { formatAddress, formatCurrency, formatDate, formatShippingEstimate } from '../utils/formats'
-import { Badge } from './ui/badge'
-import { CardHeader, CardContent, Card } from './ui/card'
+import {
+  calculateDeliveryDate,
+  convertShippingEstimateToMinutes,
+  formatAddress,
+  formatCurrency,
+  formatDate,
+  formatShippingEstimate,
+} from '../utils/formats'
 import { CalendarIcon, ClockIcon, CopyIcon, PackageIcon, PhoneIcon, StoreIcon } from './ui/svg'
-import { Skeleton } from './ui/skeleton'
+import type { OrderListItemWithDetails, OrderListResponse } from '../../node/types/orderList'
 import { getPaymentMethodName } from '../utils/getPaymentMethodName'
-import { Tooltip } from './ui/tooltip'
-import { getOrderStatus } from '../utils/getOrderStatus'
-import { ConnectorResponses } from './ConnectorResponses'
+import { getPickupItems } from '../utils/getItemsByDeliveryChannel'
 import { extractPhoneNumber } from '../utils/getPhoneNumber'
+import { CardHeader, CardContent, Card } from './ui/card'
+import { ConnectorResponses } from './ConnectorResponses'
+import { getOrderStatus } from '../utils/getOrderStatus'
 import { CancellationModal } from './CancellationModal'
+import type { MyPageProps } from '../types'
+import { Skeleton } from './ui/skeleton'
+import { Tooltip } from './ui/tooltip'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
+
 import styles from '../styles/index.module.css'
-import { getPickupItems } from '../utils/getPickupItems'
+import { getCancellationText } from '../utils/getCancellationText'
 
 type Props = {
   _notUsed?: null
@@ -38,10 +47,35 @@ const OrderDetails = ({ match }: Props) => {
     )?.length > 0
 
   const packageList = order?.details?.packageAttachment.packages ?? []
-  const pickupItems = getPickupItems(order?.details?.shippingData?.logisticsInfo)
+  const pickupItems = getPickupItems(order?.details?.shippingData?.logisticsInfo, 'pickup-in-point')
+  const deliveryItems = getPickupItems(order?.details?.shippingData?.logisticsInfo, 'delivery')
   const orderStatus = getOrderStatus(order)
 
+  const SLA_FALLBACK = '0bd'
+
+  const maxDeliveryEstimate = deliveryItems.reduce((max, item) => {
+    const maxMinutes = convertShippingEstimateToMinutes(max)
+    const currentMinutes = convertShippingEstimateToMinutes(item.shippingEstimate)
+
+    return currentMinutes > maxMinutes ? item.shippingEstimate : max
+  }, deliveryItems[0]?.shippingEstimate || SLA_FALLBACK)
+
+  const maxPickupEstimate = pickupItems.reduce((max, item) => {
+    const maxMinutes = convertShippingEstimateToMinutes(max)
+    const currentMinutes = convertShippingEstimateToMinutes(item.shippingEstimate)
+
+    return currentMinutes > maxMinutes ? item.shippingEstimate : max
+  }, pickupItems[0]?.shippingEstimate || SLA_FALLBACK)
+
+  const maximumShippingEstimateDate = calculateDeliveryDate(
+    order?.creationDate,
+    maxDeliveryEstimate === SLA_FALLBACK ? maxPickupEstimate : maxDeliveryEstimate
+  ).toISOString()
+
+  console.log('will >', { pickupItems, deliveryItems })
+
   const hasShipping = hasShippingAddress && packageList.length > 0
+  const isCancellationRequest = order?.status === 'cancellation-requested'
 
   useEffect(() => {
     axios
@@ -54,6 +88,7 @@ const OrderDetails = ({ match }: Props) => {
       .then((response) => {
         setLoading(false)
         setOrder(response.data?.list?.[0] ?? {})
+        console.log('will >', { response })
       })
       .catch((error) => {
         console.error('Error fetching order:', error)
@@ -130,7 +165,38 @@ const OrderDetails = ({ match }: Props) => {
     return <></>
   }
 
-  console.log({ order })
+  console.log({
+    order,
+    maxDeliveryEstimate,
+    maxPickupEstimate,
+    maximumShippingEstimateDate,
+    deliveryDate: calculateDeliveryDate(order.creationDate, maxDeliveryEstimate),
+  })
+
+  const CancellationMessage = () => {
+    if (!order?.details?.cancellationData) return null
+
+    return (
+      <>
+        <h4 className={styles.trackingTitle}>
+          {isCancellationRequest ? 'Cancelamento solicitado' : 'Pedido cancelado'}
+        </h4>
+        <div className={styles.trackingEventCancelled}>
+          <div className={styles.trackingDescription}>
+            <div className="flex items-center">
+              <CalendarIcon className={styles.icon_marginRight} />
+              <span>
+                {`${isCancellationRequest ? 'Solicitado' : 'Cancelado'} em ${formatDate(order?.details?.cancellationData?.CancellationDate)}`}
+              </span>
+            </div>
+          </div>
+          <div className={styles.smallText}>
+            {getCancellationText(order?.details?.cancellationData, isCancellationRequest)}
+          </div>
+        </div>
+      </>
+    )
+  }
 
   return (
     <div className={styles.container}>
@@ -139,11 +205,18 @@ const OrderDetails = ({ match }: Props) => {
           <div className={styles.headerInfo}>
             <span className={styles.orderSubtitle}>{formatDate(order.creationDate, 'long')}</span>
             <span> • </span>
-            <Badge variant={orderStatus.variant}>{orderStatus.label}</Badge>
+            <Tooltip label={orderStatus.tooltip}>
+              <Badge variant={orderStatus.variant}>{orderStatus.label}</Badge>
+            </Tooltip>
           </div>
-          <CancellationModal allowCancellation={order.details?.allowCancellation} orderId={order?.orderId} />
+          <CancellationModal
+            allowCancellation={order.details?.allowCancellation}
+            orderId={order?.orderId}
+            history={order?.details?.cancellationRequests}
+          />
         </div>
       )}
+
       <div className={styles.orderDetailsGrid}>
         <Card className={styles.card}>
           <CardHeader className={styles.cardHeader}>
@@ -193,14 +266,17 @@ const OrderDetails = ({ match }: Props) => {
                       {payment.paymentSystemName === 'Vale' && (
                         <div className={styles.textMuted}>{payment.redemptionCode}</div>
                       )}
+
                       {payment.firstDigits && payment.lastDigits && (
                         <div className={styles.textMuted}>**** **** **** {payment.lastDigits}</div>
                       )}
+
                       {payment.installments > 1 && (
                         <div className={styles.textMuted}>
                           {payment.installments}x de R$ {formatCurrency(payment.value / payment.installments)}
                         </div>
                       )}
+
                       <div className={styles.totalValue}>R$ {formatCurrency(payment.value)}</div>
 
                       {Object.entries(payment.connectorResponses).length > 0 && (
@@ -208,7 +284,9 @@ const OrderDetails = ({ match }: Props) => {
                           <summary className={`${styles.textMuted} ${styles.additionalInfoToggle}`}>
                             Informações adicionais
                           </summary>
-                          <ConnectorResponses responses={payment.connectorResponses} />
+                          <div className={styles.additionalInfoContent}>
+                            <ConnectorResponses responses={payment.connectorResponses} />
+                          </div>
                         </details>
                       )}
                     </div>
@@ -248,6 +326,10 @@ const OrderDetails = ({ match }: Props) => {
               <div className={styles.summaryItem}>
                 <span className={styles.textMuted}>Status:</span>
                 <span className={styles.summaryValue}>{orderStatus.label}</span>
+              </div>
+              <div className={styles.summaryItem}>
+                <span className={styles.textMuted}>Previsão de entrega:</span>
+                <span className={styles.summaryValue}>{formatDate(maximumShippingEstimateDate, '2-digit')}</span>
               </div>
               <div className={styles.summaryItem}>
                 <span className={styles.textMuted}>Data do pedido:</span>
@@ -306,6 +388,7 @@ const OrderDetails = ({ match }: Props) => {
                                 : 'Endereço não disponível'}
                             </span>
                           </div>
+
                           <div className={styles.packageInfoItem}>
                             <span className={styles.textMuted}>Cidade/Estado:</span>
                             <span>
@@ -314,6 +397,7 @@ const OrderDetails = ({ match }: Props) => {
                                 : 'Localização não disponível'}
                             </span>
                           </div>
+
                           <div className={styles.packageInfoItem}>
                             <span className={styles.textMuted}>Prazo de retirada:</span>
                             <span>
@@ -322,12 +406,9 @@ const OrderDetails = ({ match }: Props) => {
                                 : 'Não disponível'}
                             </span>
                           </div>
+
                           <div className={styles.packageInfoItem}>
                             <span className={styles.textMuted}>Contato:</span>
-                            <span>{phoneNumber ?? 'Não disponível'}</span>
-                          </div>
-                          <div className={`${styles.packageInfoItem} ${styles.fullLine}`}>
-                            <span className={styles.textMuted}>Complemento:</span>
                             <span>{storeInfo.address?.complement ?? 'Não disponível'}</span>
                           </div>
 
@@ -350,65 +431,52 @@ const OrderDetails = ({ match }: Props) => {
                           ))}
                         </div>
 
-                        <div className={styles.pickupCodeSection}>
-                          <h4 className={styles.pickupCodeTitle}>Código para retirada:</h4>
-                          <div className={styles.pickupCodeContainer}>
-                            {order.pickupOnStoreCode ? (
-                              <div className={styles.pickupCodeDisplay}>
-                                <div className={styles.pickupCodeValue}>
-                                  <span className={styles.pickupCodeText}>{order.pickupOnStoreCode}</span>
-                                  <Button
-                                    variant="iconOnly"
-                                    className={styles.pickupCodeCopyButton}
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(order.pickupOnStoreCode!)
-                                    }}
-                                    title="Copiar código"
-                                  >
-                                    <CopyIcon />
-                                  </Button>
-                                </div>
-                                <p className={styles.pickupCodeInstructions}>
-                                  Apresente este código na loja para retirar seus produtos.
-                                </p>
-                              </div>
-                            ) : (
-                              <div className={styles.pickupCodePending}>
-                                <div className={styles.pickupCodePendingIcon}>
-                                  <ClockIcon />
-                                </div>
-                                <div className={styles.pickupCodePendingText}>
-                                  <p className={styles.pickupCodePendingTitle}>Código em preparação</p>
-                                  <p className={styles.pickupCodePendingDescription}>
-                                    Você receberá um e-mail com o código assim que os produtos estiverem disponíveis
-                                    para retirada.
+                        {!order?.details?.cancellationData && (
+                          <div className={styles.pickupCodeSection}>
+                            <h4 className={styles.pickupCodeTitle}>Código para retirada:</h4>
+                            <div className={styles.pickupCodeContainer}>
+                              {order.pickupOnStoreCode ? (
+                                <div className={styles.pickupCodeDisplay}>
+                                  <div className={styles.pickupCodeValue}>
+                                    <span className={styles.pickupCodeText}>{order.pickupOnStoreCode}</span>
+                                    <Button
+                                      variant="iconOnly"
+                                      className={styles.pickupCodeCopyButton}
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(order.pickupOnStoreCode!)
+                                      }}
+                                      title="Copiar código"
+                                    >
+                                      <CopyIcon />
+                                    </Button>
+                                  </div>
+                                  <p className={styles.pickupCodeInstructions}>
+                                    Apresente este código na loja para retirar seus produtos.
                                   </p>
                                 </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {pickupItem.shippingEstimateDate && (
-                          <div className={styles.trackingStatus}>
-                            {order.details?.cancellationData ? (
-                              <>
-                                <h4 className={styles.trackingTitle}>Pedido cancelado</h4>
-                                <div className={styles.trackingEventCancelled}>
-                                  <div className={styles.trackingDescription}>
-                                    <div className="flex items-center">
-                                      <CalendarIcon className={styles.icon_marginRight} />
-                                      <span>
-                                        Cancelado em {formatDate(order.details.cancellationData.CancellationDate)}
-                                      </span>
-                                    </div>
+                              ) : (
+                                <div className={styles.pickupCodePending}>
+                                  <div className={styles.pickupCodePendingIcon}>
+                                    <ClockIcon />
                                   </div>
-                                  <div className={styles.smallText}>
-                                    Este pedido foi cancelado e não estará mais disponível para entrega ou retirada.
+                                  <div className={styles.pickupCodePendingText}>
+                                    <p className={styles.pickupCodePendingTitle}>Código em preparação</p>
+                                    <p className={styles.pickupCodePendingDescription}>
+                                      Você receberá um e-mail com o código assim que os produtos estiverem disponíveis
+                                      para retirada.
+                                    </p>
                                   </div>
                                 </div>
-                              </>
-                            ) : (
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className={styles.trackingStatus}>
+                          {order?.details?.cancellationData ? (
+                            <CancellationMessage />
+                          ) : (
+                            pickupItem.shippingEstimateDate && (
                               <>
                                 <h4 className={styles.trackingTitle}>Disponível para retirada:</h4>
                                 <div className={styles.trackingEvent}>
@@ -425,9 +493,9 @@ const OrderDetails = ({ match }: Props) => {
                                   </div>
                                 </div>
                               </>
-                            )}
-                          </div>
-                        )}
+                            )
+                          )}
+                        </div>
 
                         <div className={styles.packageActions}>
                           {storeInfo.address?.geoCoordinates && (
@@ -447,6 +515,93 @@ const OrderDetails = ({ match }: Props) => {
                               <PhoneIcon className={styles.icon_marginRight} />
                               Ligar para Loja
                             </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {deliveryItems.length > 0 && (
+          <Card className={`${styles.card} ${styles.fullLine}`}>
+            <CardHeader className={styles.cardHeader}>
+              <div className={styles.cardTitleWithIcon}>
+                <StoreIcon className={styles.icon_marginRight} />
+                <h2 className={styles.cardTitle}>Itens para Entrega</h2>
+              </div>
+            </CardHeader>
+            <CardContent className={styles.cardContent}>
+              <div className={styles.packagesList}>
+                {deliveryItems.map((deliveryItem, index) => {
+                  const items = deliveryItem.items
+                    .map((pickupOrderItem: { itemId: string }) =>
+                      order?.details?.items.find((i) => i.id === pickupOrderItem.itemId)
+                    )
+                    .filter(Boolean)
+
+                  return (
+                    <div key={index} className={styles.packageItem}>
+                      <div className={styles.packageHeader}>
+                        <h3 className={styles.packageTitle}>Entregue por {deliveryItem.deliveryCompany}</h3>
+                        <Badge variant="success">Entrega em domicílio</Badge>
+                      </div>
+
+                      <div className={styles.packageDetails}>
+                        <div className={styles.packageInfo}>
+                          <div className={styles.packageInfoItem}>
+                            <span className={styles.textMuted}>Endereço:</span>
+                            <span>{formatAddress(order.details?.shippingData.address)}</span>
+                          </div>
+
+                          <div className={styles.packageInfoItem}>
+                            <span className={styles.textMuted}>Destinatário :</span>
+                            <span>{order.details?.shippingData.address.receiverName}</span>
+                          </div>
+
+                          <div className={`${styles.packageInfoItem} ${styles.fullLine}`}>
+                            <span className={styles.textMuted}>Prazo de entrega:</span>
+                            <span>
+                              {deliveryItem.shippingEstimate
+                                ? formatShippingEstimate(deliveryItem.shippingEstimate)
+                                : 'Não disponível'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className={styles.packageItems}>
+                          <h4 className={styles.packageItemsTitle}>Itens para entrega:</h4>
+
+                          {items.map((item) => (
+                            <div className={styles.packageItemDetail} key={item?.name}>
+                              <span>{item?.name}</span>
+                              <span className={styles.textMuted}>Qtd: {item?.quantity}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className={styles.trackingStatus}>
+                          {order?.details?.cancellationData ? (
+                            <CancellationMessage />
+                          ) : (
+                            deliveryItem.shippingEstimateDate && (
+                              <>
+                                <h4 className={styles.trackingTitle}>Entregue até:</h4>
+                                <div className={styles.trackingEvent}>
+                                  <div className={styles.trackingDescription}>
+                                    <div className="flex items-center">
+                                      <CalendarIcon className={styles.icon_marginRight} />
+                                      <span>
+                                        O pedido será entregue até {formatDate(maximumShippingEstimateDate, '2-digit')}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </>
+                            )
                           )}
                         </div>
                       </div>

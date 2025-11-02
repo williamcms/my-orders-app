@@ -1,7 +1,7 @@
 {
   "name": "my-orders-app",
   "vendor": "{{account}}",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "title": "Custom My Orders Page for My Account",
   "builders": {
     "react": "3.x",

@@ -3,12 +3,13 @@ import { ContentWrapper } from 'vtex.my-account-commons'
 import { Route } from 'vtex.my-account-commons/Router'
 import { index as RichText } from 'vtex.rich-text'
 
-import styles from './styles/index.module.css'
 import type { MyPageProps, PageMessages } from './types'
-import { Footer } from './components/Footer'
+import { OrderDetails } from './components/OrderDetails'
 import { OrderList } from './components/OrderList'
 import { Button } from './components/ui/button'
-import { OrderDetails } from './components/OrderDetails'
+import { Footer } from './components/Footer'
+
+import styles from './styles/index.module.css'
 
 const Content = ({ history }: MyPageProps, { header }: PageMessages) => {
   const defaultHeader = {
