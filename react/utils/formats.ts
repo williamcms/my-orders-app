@@ -36,10 +36,8 @@ export const formatAddress = (address?: ShippingAddress): string => {
   }, ${address.city} - ${address.state}, ${address.postalCode}`
 }
 
-// Define business hours (can be configurable)
-const BUSINESS_HOURS_START = 9 // 9 AM
-const BUSINESS_HOURS_END = 17 // 5 PM (17:00)
-const BUSINESS_HOURS_PER_DAY = BUSINESS_HOURS_END - BUSINESS_HOURS_START
+/** Working hours in a business day, used to convert bd estimates to minutes */
+const BUSINESS_HOURS_PER_DAY = 8
 
 type ShippingEstimateType = 'bd' | 'hbd' | 'mbd' | 'h' | 'm' | 'd' | 'unknown'
 
@@ -73,40 +71,6 @@ const addBusinessDays = (startDate: Date, daysToAdd: number): Date => {
     result.setDate(result.getDate() + 1)
     if (!isWeekend(result)) {
       daysAdded++
-    }
-  }
-
-  return result
-}
-
-// Helper: Add business hours (respecting business hours and weekends)
-const addBusinessHours = (startDate: Date, hoursToAdd: number): Date => {
-  let result = moveToNextBusinessDay(new Date(startDate))
-  let remainingHours = hoursToAdd
-
-  // If we're outside business hours, move to start of next business day
-  const currentHour = result.getHours()
-  if (currentHour < BUSINESS_HOURS_START) {
-    result.setHours(BUSINESS_HOURS_START, 0, 0, 0)
-  } else if (currentHour >= BUSINESS_HOURS_END) {
-    result.setDate(result.getDate() + 1)
-    result = moveToNextBusinessDay(result)
-    result.setHours(BUSINESS_HOURS_START, 0, 0, 0)
-  }
-
-  while (remainingHours > 0) {
-    const currentHour = result.getHours()
-    const hoursLeftInDay = BUSINESS_HOURS_END - currentHour
-
-    if (remainingHours <= hoursLeftInDay) {
-      result.setHours(result.getHours() + remainingHours)
-      remainingHours = 0
-    } else {
-      // Move to next business day
-      remainingHours -= hoursLeftInDay
-      result.setDate(result.getDate() + 1)
-      result = moveToNextBusinessDay(result)
-      result.setHours(BUSINESS_HOURS_START, 0, 0, 0)
     }
   }
 
@@ -224,21 +188,15 @@ export const calculateDeliveryDate = (creationDate?: string | null, shippingEsti
   switch (type) {
     case 'bd':
       return addBusinessDays(startDate, value)
+    /* hbd/mbd are treated as plain hours/minutes: business-hour SLAs are rare
+       enough that a full business-hours engine is not worth maintaining */
     case 'hbd':
-      return addBusinessHours(startDate, value)
-    case 'mbd': {
-      // Convert minutes to hours and add as business hours
-      const hours = Math.floor(value / 60)
-      const minutes = value % 60
-      let result = addBusinessHours(startDate, hours)
-      result.setMinutes(result.getMinutes() + minutes)
-      return result
-    }
     case 'h': {
       const result = new Date(startDate)
       result.setHours(result.getHours() + value)
       return result
     }
+    case 'mbd':
     case 'm': {
       const result = new Date(startDate)
       result.setMinutes(result.getMinutes() + value)

@@ -4,6 +4,7 @@ import { useOrderItems } from 'vtex.order-items/OrderItems'
 import { usePixel } from 'vtex.pixel-manager'
 import axios from 'axios'
 
+import type { ApiResponse } from '../../node/types/api'
 import type { OrderListItemWithDetails, OrderListResponse } from '../../node/types/orderList'
 import { ChevronRightIcon, RefreshCwIcon, ImagePlaceholder } from './ui/svg'
 import { adjustItemsForEvent } from '../utils/adjustItemsForEvent'
@@ -38,7 +39,7 @@ const OrderList = ({ history }: Props) => {
 
   useEffect(() => {
     axios
-      .get<OrderListResponse>('/_v/private/listOrders', {
+      .get<ApiResponse<OrderListResponse>>('/_v/private/listOrders', {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
@@ -46,7 +47,7 @@ const OrderList = ({ history }: Props) => {
       })
       .then((response) => {
         setLoading(false)
-        setOrders(response.data)
+        setOrders(response.data.data)
       })
       .catch((e: ErrorResponse) => {
         console.error('Error fetching order:', e)

@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from 'react'
 import axios from 'axios'
+import React, { useEffect, useState } from 'react'
 
+import type { ApiResponse } from '../../node/types/api'
+import type { OrderListItemWithDetails, OrderListResponse } from '../../node/types/orderList'
+import styles from '../styles/index.module.css'
+import type { MyPageProps } from '../types'
 import {
   calculateDeliveryDate,
   convertShippingEstimateToMinutes,
@@ -9,23 +13,19 @@ import {
   formatDate,
   formatShippingEstimate,
 } from '../utils/formats'
-import { CalendarIcon, ClockIcon, CopyIcon, PackageIcon, PhoneIcon, StoreIcon } from './ui/svg'
-import type { OrderListItemWithDetails, OrderListResponse } from '../../node/types/orderList'
-import { getPaymentMethodName } from '../utils/getPaymentMethodName'
-import { getPickupItems } from '../utils/getItemsByDeliveryChannel'
-import { extractPhoneNumber } from '../utils/getPhoneNumber'
-import { CardHeader, CardContent, Card } from './ui/card'
-import { ConnectorResponses } from './ConnectorResponses'
-import { getOrderStatus } from '../utils/getOrderStatus'
-import { CancellationModal } from './CancellationModal'
-import type { MyPageProps } from '../types'
-import { Skeleton } from './ui/skeleton'
-import { Tooltip } from './ui/tooltip'
-import { Button } from './ui/button'
-import { Badge } from './ui/badge'
-
-import styles from '../styles/index.module.css'
 import { getCancellationText } from '../utils/getCancellationText'
+import { getPickupItems } from '../utils/getItemsByDeliveryChannel'
+import { getOrderStatus } from '../utils/getOrderStatus'
+import { getPaymentMethodName } from '../utils/getPaymentMethodName'
+import { extractPhoneNumber } from '../utils/getPhoneNumber'
+import { CancellationModal } from './CancellationModal'
+import { ConnectorResponses } from './ConnectorResponses'
+import { Badge } from './ui/badge'
+import { Button } from './ui/button'
+import { Card, CardContent, CardHeader } from './ui/card'
+import { Skeleton } from './ui/skeleton'
+import { CalendarIcon, ClockIcon, CopyIcon, PackageIcon, PhoneIcon, StoreIcon } from './ui/svg'
+import { Tooltip } from './ui/tooltip'
 
 type Props = {
   _notUsed?: null
@@ -72,14 +72,12 @@ const OrderDetails = ({ match }: Props) => {
     maxDeliveryEstimate === SLA_FALLBACK ? maxPickupEstimate : maxDeliveryEstimate
   ).toISOString()
 
-  console.log('will >', { pickupItems, deliveryItems })
-
   const hasShipping = hasShippingAddress && packageList.length > 0
   const isCancellationRequest = order?.status === 'cancellation-requested'
 
   useEffect(() => {
     axios
-      .get<OrderListResponse>(`/_v/private/getOrderDetails/${orderId}`, {
+      .get<ApiResponse<OrderListResponse>>(`/_v/private/getOrderDetails/${orderId}`, {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
@@ -87,8 +85,7 @@ const OrderDetails = ({ match }: Props) => {
       })
       .then((response) => {
         setLoading(false)
-        setOrder(response.data?.list?.[0] ?? {})
-        console.log('will >', { response })
+        setOrder(response.data.data?.list?.[0] ?? {})
       })
       .catch((error) => {
         console.error('Error fetching order:', error)
@@ -165,14 +162,6 @@ const OrderDetails = ({ match }: Props) => {
     return <></>
   }
 
-  console.log({
-    order,
-    maxDeliveryEstimate,
-    maxPickupEstimate,
-    maximumShippingEstimateDate,
-    deliveryDate: calculateDeliveryDate(order.creationDate, maxDeliveryEstimate),
-  })
-
   const CancellationMessage = () => {
     if (!order?.details?.cancellationData) return null
 
@@ -186,7 +175,9 @@ const OrderDetails = ({ match }: Props) => {
             <div className="flex items-center">
               <CalendarIcon className={styles.icon_marginRight} />
               <span>
-                {`${isCancellationRequest ? 'Solicitado' : 'Cancelado'} em ${formatDate(order?.details?.cancellationData?.CancellationDate)}`}
+                {`${isCancellationRequest ? 'Solicitado' : 'Cancelado'} em ${formatDate(
+                  order?.details?.cancellationData?.CancellationDate
+                )}`}
               </span>
             </div>
           </div>

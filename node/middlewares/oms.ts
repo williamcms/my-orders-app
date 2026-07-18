@@ -1,16 +1,15 @@
 import type { Maybe } from '@vtex/api'
 
 import type { OrderListResponse } from '../types/orderList'
+import { getErrorStatus } from '../utils/errors'
+import { generateHash } from '../utils/hash'
+import { respond } from '../utils/respond'
 
 const BUCKET = 'MY_ORDERS'
 
 const HOUR_INTERVAL = 0.25
-/**
- * The time window, in milliseconds, used for rate limiting operations.
- *
- * This constant represents a N-hour interval (N * 60 * 60 * 1000 ms).
- * The result should be the amount of hours in ms
- */
+
+/** Cache window in milliseconds (HOUR_INTERVAL hours) */
 const TIMESTAMP_LIMIT = HOUR_INTERVAL * 60 * 60 * 1000
 
 type QueryParams = Record<string, undefined | string | string[]>
@@ -21,22 +20,8 @@ const asString = (v: QueryParams, path: string, defaultValue?: unknown): string 
   return str ?? String(defaultValue ?? '')
 }
 
-const generateHash = async (input: string): Promise<string> => {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(input)
-
-  // Using SHA-512 for bigger digest (512 bits)
-  const hashBuffer = await crypto.subtle.digest('SHA-512', data)
-
-  // Convert buffer to hex
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hexHash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
-
-  // Optional: Truncate to first 100 characters
-  const truncatedHash = hexHash.slice(0, 100)
-
-  return truncatedHash
-}
+/** Keeps the data field shaped as an OrderListResponse even on failures */
+const emptyList = (): OrderListResponse => ({ list: [], cache: { isCached: false, timeStamp: Date.now() } })
 
 export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
   const {
@@ -45,9 +30,13 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
     clients: { oms, vbase, masterdata },
   } = ctx
 
-  if (!storeUserAuthToken) return
+  if (!storeUserAuthToken) {
+    respond({ ctx, status: 401, success: false, data: emptyList(), message: 'Unauthorized' })
 
-  const hash = await generateHash(storeUserAuthToken)
+    return
+  }
+
+  const hash = generateHash(storeUserAuthToken)
 
   const typeSuffix = orderDetails ? '_PAGE' : '_LIST'
   const orderSuffix = orderDetails ? `_${orderDetails.orderId}` : ''
@@ -58,29 +47,19 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
   const timeElapsed = timeStamp - (cachedResponse?.cache?.timeStamp ?? 0)
 
   if (timeElapsed < TIMESTAMP_LIMIT && cachedResponse?.cache?.timeStamp) {
-    const response: OrderListResponse = {
-      ...cachedResponse,
-      cache: {
-        isCached: true,
-        check: { timeElapsed, timeStamp, limitHR: HOUR_INTERVAL, limitMS: TIMESTAMP_LIMIT },
-        hash,
-        timeStamp,
-      },
-    }
-
     logger.info({
       log: 'Response served from cache',
-      details: {
-        timeElapsed,
-        timeStamp,
-        limitHR: HOUR_INTERVAL,
-        limitMS: TIMESTAMP_LIMIT,
-      },
+      details: { timeElapsed, timeStamp, limitMS: TIMESTAMP_LIMIT },
       message: 'getOrder-list-fromCache',
     })
 
-    ctx.status = 200
-    ctx.body = response
+    respond({
+      ctx,
+      status: 200,
+      success: true,
+      data: { ...cachedResponse, cache: { isCached: true, timeStamp: cachedResponse.cache.timeStamp } },
+      message: 'Served from cache',
+    })
 
     await next()
 
@@ -92,12 +71,7 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
 
     logger.info({
       log: 'Cache entry deleted due to expired time window',
-      details: {
-        timeElapsed,
-        timeStamp,
-        limitHR: HOUR_INTERVAL,
-        limitMS: TIMESTAMP_LIMIT,
-      },
+      details: { timeElapsed, timeStamp, limitMS: TIMESTAMP_LIMIT },
       message: 'getOrder-list-deletedCache',
     })
   }
@@ -115,18 +89,33 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
     return data?.codigo_retirada ?? null
   }
 
+  /** Details are complementary: a failure is logged and the order ships without them */
+  const getDetails = async (orderId: string) => {
+    try {
+      return await oms.getOrder({ orderId })
+    } catch (err) {
+      logger.warn({
+        error: (err as Error).message,
+        orderId,
+        message: 'getOrder-details-failed',
+      })
+
+      return undefined
+    }
+  }
+
   const orderListWithDetails = orderDetails
     ? [
         {
           ...orderDetails,
-          details: await oms.getOrder({ orderId: orderDetails.orderId }),
+          details: await getDetails(orderDetails.orderId),
           pickupOnStoreCode: await pickupOnStoreCode(orderDetails.orderId),
         },
       ]
     : await Promise.all(
         orderList.list.map(async (order) => ({
           ...order,
-          details: await oms.getOrder({ orderId: order.orderId }),
+          details: await getDetails(order.orderId),
           pickupOnStoreCode: await pickupOnStoreCode(order.orderId),
         }))
       )
@@ -134,33 +123,24 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
   const response: OrderListResponse = {
     ...(orderDetails ? {} : orderList),
     list: orderListWithDetails,
-    cache: {
-      isCached: false,
-      check: { timeElapsed, timeStamp, limitHR: HOUR_INTERVAL, limitMS: TIMESTAMP_LIMIT },
-      hash,
-      timeStamp,
-    },
+    cache: { isCached: false, timeStamp },
   }
 
   if (!response.list.length) {
-    const error = new Error('Not Found')
-
     logger.error({
-      error,
+      error: new Error('Not Found'),
       details: response,
       message: 'getOrder-list-notFound',
     })
 
-    ctx.status = 404
-    ctx.body = error.message
+    respond({ ctx, status: 404, success: false, data: response, message: 'Not Found' })
 
     return
   }
 
   vbase.saveJSON(BUCKET + typeSuffix, hash + orderSuffix, response)
 
-  ctx.status = 200
-  ctx.body = response
+  respond({ ctx, status: 200, success: true, data: response, message: 'Orders retrieved' })
 
   await next()
 }
@@ -175,7 +155,11 @@ export const listOrders = async (ctx: Context, next: () => Promise<unknown>) => 
     clients: { oms },
   } = ctx
 
-  if (!storeUserAuthToken) return
+  if (!storeUserAuthToken) {
+    respond({ ctx, status: 401, success: false, data: emptyList(), message: 'Unauthorized' })
+
+    return
+  }
 
   ctx.set('Access-Control-Allow-Methods', 'POST')
 
@@ -183,53 +167,17 @@ export const listOrders = async (ctx: Context, next: () => Promise<unknown>) => 
   const limit = asString(params, 'limit', 10)
 
   try {
-    const orders = await oms.listOrders({ page, limit, token: storeUserAuthToken })
-
-    if ('error' in orders) {
-      const error = typeof orders.error === 'string' ? JSON.parse(orders.error) : orders.error
-
-      let errorCode = 500
-      let errorMessage = 'Internal server error'
-
-      if ('message' in error) {
-        const match = (error.message as string).match(/\d{3}/)
-
-        if (match) {
-          errorCode = parseInt(match[0], 10)
-        }
-
-        errorMessage = error.message as string
-      }
-
-      logger.error({
-        error: errorMessage,
-        errorCode,
-        message: 'listOrders-api-failed',
-      })
-
-      ctx.status = errorCode
-      ctx.body = { message: errorMessage }
-
-      return
-    }
-
-    ctx.state.orderList = orders
+    ctx.state.orderList = await oms.listOrders({ page, limit, token: storeUserAuthToken })
   } catch (err) {
-    const error = err as Error
-    const isTimeout = error.message?.includes('timeout')
+    const { status, message } = getErrorStatus(err)
 
     logger.error({
-      error: {
-        message: error.message,
-        name: error.name,
-      },
+      error: message,
+      errorCode: status,
       message: 'listOrders-api-failed',
     })
 
-    ctx.status = isTimeout ? 504 : 500
-    ctx.body = {
-      message: isTimeout ? 'Request timeout' : 'Internal server error',
-    }
+    respond({ ctx, status, success: false, data: emptyList(), message })
 
     return
   }
@@ -247,40 +195,31 @@ export const getOrderDetails = async (ctx: Context, next: () => Promise<unknown>
     clients: { oms },
   } = ctx
 
-  if (!storeUserAuthToken || !params.orderId) return
+  if (!storeUserAuthToken || !params.orderId) {
+    respond({ ctx, status: 401, success: false, data: emptyList(), message: 'Unauthorized' })
+
+    return
+  }
 
   ctx.set('Access-Control-Allow-Methods', 'POST')
 
   const orderId = asString(params, 'orderId')
 
-  const orders = await oms.getOrderDetails({ orderId, token: storeUserAuthToken })
-
-  if ('error' in orders) {
-    const error = typeof orders.error === 'string' ? JSON.parse(orders.error) : orders.error
-
-    let errorCode = 500
-
-    if ('message' in error) {
-      const match = (error.message as string).match(/\d{3}/)
-
-      if (match) {
-        errorCode = parseInt(match[0], 10)
-      }
-    }
+  try {
+    ctx.state.orderDetails = await oms.getOrderDetails({ orderId, token: storeUserAuthToken })
+  } catch (err) {
+    const { status, message } = getErrorStatus(err)
 
     logger.error({
-      error,
-      details: orders.error,
+      error: message,
+      errorCode: status,
       message: 'getOrderDetails-api-failed',
     })
 
-    ctx.status = errorCode
-    ctx.body = error
+    respond({ ctx, status, success: false, data: emptyList(), message })
 
     return
   }
-
-  ctx.state.orderDetails = orders
 
   await next()
 }

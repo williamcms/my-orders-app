@@ -30,52 +30,39 @@ export default class OMS extends JanusClient {
    * Not exposed as a public API.
    */
   public async getOrder({ orderId }: { orderId: string }) {
-    try {
-      const response = await this.http.getRaw<OrderListItemDetails>(this.routes.getOrder(orderId), {
-        metric: 'oms-getOrder',
-        nullIfNotFound: true,
-        headers: {
-          VtexIdclientAutCookie: this.context.authToken,
-        },
-      })
+    const response = await this.http.getRaw<OrderListItemDetails>(this.routes.getOrder(orderId), {
+      metric: 'oms-getOrder',
+      nullIfNotFound: true,
+      /* Private OMS route: authenticated with the app's own token, authorized by the OMSViewer policy */
+      headers: {
+        VtexIdclientAutCookie: this.context.authToken,
+      },
+    })
 
-      return response.data
-    } catch (err) {
-      console.error(err)
-
-      return undefined
-    }
+    return response.data
   }
 
   public async listOrders({ page, limit, token }: { page: string; limit: string; token?: string }) {
-    try {
-      const response = await this.http.getRaw<OrderListResponse>(this.routes.listOrders(page, limit), {
-        metric: 'oms-listOrders',
-        nullIfNotFound: true,
-        headers: {
-          VtexIdclientAutCookie: token,
-        },
-      })
+    const response = await this.http.getRaw<OrderListResponse>(this.routes.listOrders(page, limit), {
+      metric: 'oms-listOrders',
+      nullIfNotFound: true,
+      headers: {
+        VtexIdclientAutCookie: token,
+      },
+    })
 
-      return response.data
-    } catch (err) {
-      return { error: err }
-    }
+    return response.data
   }
 
   public async getOrderDetails({ orderId, token }: { orderId: string; token?: string }) {
-    try {
-      const response = await this.http.getRaw<OrderListItemWithDetails>(this.routes.getOrderDetails(orderId), {
-        metric: 'oms-getOrderDetails',
-        nullIfNotFound: true,
-        headers: {
-          VtexIdclientAutCookie: token,
-        },
-      })
+    const response = await this.http.getRaw<OrderListItemWithDetails>(this.routes.getOrderDetails(orderId), {
+      metric: 'oms-getOrderDetails',
+      nullIfNotFound: true,
+      headers: {
+        VtexIdclientAutCookie: token,
+      },
+    })
 
-      return response.data
-    } catch (err) {
-      return { error: err }
-    }
+    return response.data
   }
 }

@@ -121,8 +121,6 @@ export interface OrderListStatsWrapper {
 
 export interface CacheResponse {
   isCached?: boolean
-  check?: Record<unknown, string>
-  hash?: string
   timeStamp: number
 }
 
