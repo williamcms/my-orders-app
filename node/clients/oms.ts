@@ -1,7 +1,7 @@
 import { type InstanceOptions, type IOContext, JanusClient } from '@vtex/api'
 
-import type { OrderListItemWithDetails, OrderListResponse } from '../types/orderList'
 import type { OrderListItemDetails } from '../types/orderDetails'
+import type { OrderListItemWithDetails, OrderListResponse } from '../types/orderList'
 
 export default class OMS extends JanusClient {
   constructor(ctx: IOContext, options?: InstanceOptions) {
@@ -35,8 +35,7 @@ export default class OMS extends JanusClient {
         metric: 'oms-getOrder',
         nullIfNotFound: true,
         headers: {
-          'X-VTEX-API-AppKey': '{{X-VTEX-API-AppKey}}',
-          'X-VTEX-API-AppToken': '{{X-VTEX-API-AppToken}}',
+          VtexIdclientAutCookie: this.context.authToken,
         },
       })
 

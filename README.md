@@ -38,9 +38,6 @@ This application streamlines the order viewing process by providing detailed inf
   },
 ```
 
-> **Note:**  
-> To authenticate API requests, ensure you set the `X-VTEX-API-AppKey` and `X-VTEX-API-AppToken` headers in the `getOrder` function located at `my-orders-app\node\clients\oms.ts`, this will help the app get more detailed information of the orders that the user has access to.
-
 ## How it Works
 
 The app provides two main views:
