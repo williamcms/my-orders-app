@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^12.12.21",
+    "@vtex/danger": "^0.2.9",
     "@vtex/prettier-config": "0.1.4",
     "concurrently": "^8.2.2",
     "eslint": "7.12.1",
@@ -38,6 +39,5 @@
   "author": {
     "name": "William Di Biasi Bogik",
     "url": "https://github.com/williamcms/"
-  },
-  "$schema": "https://raw.githubusercontent.com/vtex/node-vtex-api/master/gen/manifest.schema"
+  }
 }

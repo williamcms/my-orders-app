@@ -1,32 +1,47 @@
+import axios from 'axios'
 import React, { useEffect, useState } from 'react'
-import type { EventName } from 'vtex.pixel-manager/react/PixelEventTypes'
+import { defineMessages, FormattedMessage, useIntl } from 'react-intl'
 import { useOrderItems } from 'vtex.order-items/OrderItems'
 import { usePixel } from 'vtex.pixel-manager'
-import axios from 'axios'
+import type { EventName } from 'vtex.pixel-manager/react/PixelEventTypes'
 
 import type { ApiResponse } from '../../node/types/api'
-import type { OrderListItemWithDetails, OrderListResponse } from '../../node/types/orderList'
-import { ChevronRightIcon, RefreshCwIcon, ImagePlaceholder } from './ui/svg'
-import { adjustItemsForEvent } from '../utils/adjustItemsForEvent'
 import type { OrderItem } from '../../node/types/orderDetails'
-import { getTrackingNumber } from '../utils/getTrackingNumber'
-import { formatCurrency, formatDate } from '../utils/formats'
-import { Card, CardContent, CardHeader } from './ui/card'
-import type { ErrorResponse, MyPageProps } from '../types'
-import { getOrderStatus } from '../utils/getOrderStatus'
-import { CancellationModal } from './CancellationModal'
-import { Skeleton } from './ui/skeleton'
-import { Tooltip } from './ui/tooltip'
-import { Button } from './ui/button'
-import { Badge } from './ui/badge'
-
+import type { OrderListItemWithDetails, OrderListResponse } from '../../node/types/orderList'
 import styles from '../styles/index.module.css'
+import type { ErrorResponse, MyPageProps } from '../types'
+import { adjustItemsForEvent } from '../utils/adjustItemsForEvent'
+import { formatCurrency, formatDate } from '../utils/formats'
+import { getOrderStatus } from '../utils/getOrderStatus'
+import { getTrackingNumber } from '../utils/getTrackingNumber'
+import { CancellationModal } from './CancellationModal'
+import { Badge } from './ui/badge'
+import { Button } from './ui/button'
+import { Card, CardContent, CardHeader } from './ui/card'
+import { Skeleton } from './ui/skeleton'
+import { ChevronRightIcon, ImagePlaceholder, RefreshCwIcon } from './ui/svg'
+import { Tooltip } from './ui/tooltip'
+
+const messages = defineMessages({
+  errorTitle: { id: 'store/my-orders-app.list.errorTitle' },
+  retry: { id: 'store/my-orders-app.list.retry' },
+  orderDate: { id: 'store/my-orders-app.list.orderDate' },
+  total: { id: 'store/my-orders-app.list.total' },
+  orderTotal: { id: 'store/my-orders-app.list.orderTotal' },
+  orderNumber: { id: 'store/my-orders-app.list.orderNumber' },
+  deliveryBy: { id: 'store/my-orders-app.list.deliveryBy' },
+  trackingNumber: { id: 'store/my-orders-app.list.trackingNumber' },
+  itemLine: { id: 'store/my-orders-app.list.itemLine' },
+  orderAgain: { id: 'store/my-orders-app.list.orderAgain' },
+  viewDetails: { id: 'store/my-orders-app.list.viewDetails' },
+})
 
 type Props = {
   _empty?: unknown
 } & Pick<MyPageProps, 'history'>
 
 const OrderList = ({ history }: Props) => {
+  const intl = useIntl()
   const { push } = usePixel()
   const { addItems } = useOrderItems()
 
@@ -115,7 +130,9 @@ const OrderList = ({ history }: Props) => {
   if (error && !orders && !loading) {
     return (
       <div className={styles.errorContainer}>
-        <h2 className={styles.errorTitle}>Erro ao carregar a lista de pedidos</h2>
+        <h2 className={styles.errorTitle}>
+          <FormattedMessage {...messages.errorTitle} />
+        </h2>
         <span className={styles.errorMessage}>{error.message}</span>
 
         <Button
@@ -125,7 +142,7 @@ const OrderList = ({ history }: Props) => {
             setLoading(true)
           }}
         >
-          Tentar novamente
+          <FormattedMessage {...messages.retry} />
         </Button>
       </div>
     )
@@ -212,7 +229,7 @@ const OrderList = ({ history }: Props) => {
             if (!('details' in order)) return null
 
             const trackinInfo = getTrackingNumber(order)
-            const orderStatus = getOrderStatus(order)
+            const orderStatus = getOrderStatus(intl, order)
 
             return (
               <Card key={order.orderId} className={`${styles.card} ${index >= 3 ? styles.orderCardClickable : ''}`}>
@@ -222,17 +239,28 @@ const OrderList = ({ history }: Props) => {
                 >
                   <div className={styles.orderHeaderContent}>
                     <div className={styles.orderHeaderItem} style={{ minWidth: '12.5rem' }}>
-                      <div className={styles.orderHeaderLabel}>DATA DO PEDIDO</div>
+                      <div className={styles.orderHeaderLabel}>
+                        <FormattedMessage {...messages.orderDate} />
+                      </div>
                       <div className={styles.orderHeaderValue}>{formatDate(order.creationDate)}</div>
                     </div>
                     <div className={styles.orderHeaderItem}>
                       <Tooltip label={order.paymentNames}>
-                        <div className={styles.orderHeaderLabel}>TOTAL</div>
-                        <div className={styles.orderHeaderValue}>R$ {formatCurrency(order.totalValue)}</div>
+                        <div className={styles.orderHeaderLabel}>
+                          <FormattedMessage {...messages.total} />
+                        </div>
+                        <div className={styles.orderHeaderValue}>
+                          <FormattedMessage
+                            {...messages.orderTotal}
+                            values={{ value: formatCurrency(order.totalValue) }}
+                          />
+                        </div>
                       </Tooltip>
                     </div>
                     <div className={styles.orderHeaderItem}>
-                      <div className={styles.orderHeaderLabel}>NÚMERO DO PEDIDO</div>
+                      <div className={styles.orderHeaderLabel}>
+                        <FormattedMessage {...messages.orderNumber} />
+                      </div>
                       <div className={styles.orderHeaderValue}>#{order.orderId}</div>
                     </div>
                     <Tooltip label={orderStatus.tooltip}>
@@ -250,12 +278,18 @@ const OrderList = ({ history }: Props) => {
                     <div className={styles.orderDetails}>
                       <div className={styles.orderShipping}>
                         <div className={styles.textMuted}>
-                          {order.ShippingEstimatedDateMax &&
-                            `Entrega até ${formatDate(order.ShippingEstimatedDateMax, '2-digit')}`}
+                          {order.ShippingEstimatedDateMax && (
+                            <FormattedMessage
+                              {...messages.deliveryBy}
+                              values={{ date: formatDate(order.ShippingEstimatedDateMax, '2-digit') }}
+                            />
+                          )}
                         </div>
                         {Boolean(trackinInfo.length) && (
                           <div className={styles.smallText}>
-                            <span className={styles.textMuted}>Número de rastreio: </span>
+                            <span className={styles.textMuted}>
+                              <FormattedMessage {...messages.trackingNumber} />
+                            </span>
                             {trackinInfo.map(({ trackingNumber, trackingUrl }) => {
                               if (trackingUrl) {
                                 return (
@@ -303,7 +337,10 @@ const OrderList = ({ history }: Props) => {
                             <div className={styles.orderItemDetails}>
                               <div className={styles.itemName}>{item.name}</div>
                               <div className={styles.itemPrice}>
-                                {item.quantity} un · R$ {formatCurrency(item.sellingPrice)}
+                                <FormattedMessage
+                                  {...messages.itemLine}
+                                  values={{ quantity: item.quantity, price: formatCurrency(item.sellingPrice) }}
+                                />
                               </div>
                             </div>
                           </div>
@@ -313,10 +350,10 @@ const OrderList = ({ history }: Props) => {
                       <div className={styles.orderActions}>
                         <Button variant="outline" onClick={() => addToCart(order.details?.items)}>
                           <RefreshCwIcon className={styles.icon_marginRight} />
-                          Pedir novamente
+                          <FormattedMessage {...messages.orderAgain} />
                         </Button>
                         <Button variant="outline" onClick={() => history.push(`/myOrders/${order.orderId}`)}>
-                          Ver detalhes do pedido
+                          <FormattedMessage {...messages.viewDetails} />
                         </Button>
                         <CancellationModal
                           orderId={order.orderId}

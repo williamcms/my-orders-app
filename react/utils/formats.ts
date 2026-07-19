@@ -1,4 +1,14 @@
+import type { IntlShape } from 'react-intl'
+import { defineMessages } from 'react-intl'
+
 import type { ShippingAddress } from '../../node/types/orderDetails'
+
+const messages = defineMessages({
+  businessDays: { id: 'store/my-orders-app.estimate.businessDays' },
+  hours: { id: 'store/my-orders-app.estimate.hours' },
+  minutes: { id: 'store/my-orders-app.estimate.minutes' },
+  days: { id: 'store/my-orders-app.estimate.days' },
+})
 
 export const formatDate = (
   dateString?: string | null,
@@ -50,15 +60,18 @@ interface ParsedShippingEstimate {
 // Helper: Check if date is a weekend
 const isWeekend = (date: Date): boolean => {
   const day = date.getDay()
+
   return day === 0 || day === 6 // Sunday or Saturday
 }
 
 // Helper: Move date to next business day if it's on weekend
 const moveToNextBusinessDay = (date: Date): Date => {
   const result = new Date(date)
+
   while (isWeekend(result)) {
     result.setDate(result.getDate() + 1)
   }
+
   return result
 }
 
@@ -94,18 +107,23 @@ export const parseShippingEstimate = (estimate: string): ParsedShippingEstimate 
   if (estimate.includes('hbd')) {
     return { value, type: 'hbd', original: estimate }
   }
+
   if (estimate.includes('mbd')) {
     return { value, type: 'mbd', original: estimate }
   }
+
   if (estimate.includes('bd')) {
     return { value, type: 'bd', original: estimate }
   }
+
   if (estimate.includes('h')) {
     return { value, type: 'h', original: estimate }
   }
+
   if (estimate.includes('m')) {
     return { value, type: 'm', original: estimate }
   }
+
   if (estimate.includes('d')) {
     return { value, type: 'd', original: estimate }
   }
@@ -113,29 +131,27 @@ export const parseShippingEstimate = (estimate: string): ParsedShippingEstimate 
   return { value: 0, type: 'unknown', original: estimate }
 }
 
-/** Format shipping estimate to human-readable text */
-export const formatShippingEstimate = (estimate: string): string => {
+/** Format shipping estimate to human-readable localized text */
+export const formatShippingEstimate = (estimate: string, intl: IntlShape): string => {
   const parsed = parseShippingEstimate(estimate)
-
-  if (parsed.type === 'unknown') {
-    return parsed.original
-  }
-
   const { value, type } = parsed
 
+  /* hbd/mbd reuse the plain hour/minute wording on purpose */
   switch (type) {
-    case 'hbd':
-      return `${value} ${value === 1 ? 'hora útil' : 'horas úteis'}`
-    case 'mbd':
-      return `${value} ${value === 1 ? 'minuto útil' : 'minutos úteis'}`
     case 'bd':
-      return `${value} ${value === 1 ? 'dia útil' : 'dias úteis'}`
+      return intl.formatMessage(messages.businessDays, { value })
+
+    case 'hbd':
     case 'h':
-      return `${value} ${value === 1 ? 'hora' : 'horas'}`
+      return intl.formatMessage(messages.hours, { value })
+
+    case 'mbd':
     case 'm':
-      return `${value} ${value === 1 ? 'minuto' : 'minutos'}`
+      return intl.formatMessage(messages.minutes, { value })
+
     case 'd':
-      return `${value} ${value === 1 ? 'dia' : 'dias'}`
+      return intl.formatMessage(messages.days, { value })
+
     default: {
       return parsed.original
     }
@@ -156,16 +172,22 @@ export const convertShippingEstimateToMinutes = (estimate: string): number => {
   switch (type) {
     case 'hbd':
       return value * 60 // hours to minutes
+
     case 'mbd':
       return value // already in minutes
+
     case 'bd':
       return value * (BUSINESS_HOURS_PER_DAY * 60) // business days to minutes
+
     case 'h':
       return value * 60 // hours to minutes
+
     case 'm':
       return value // already in minutes
+
     case 'd':
       return value * 1440 // calendar days to minutes (24 hours)
+
     default: {
       return 0
     }
@@ -188,25 +210,26 @@ export const calculateDeliveryDate = (creationDate?: string | null, shippingEsti
   switch (type) {
     case 'bd':
       return addBusinessDays(startDate, value)
-    /* hbd/mbd are treated as plain hours/minutes: business-hour SLAs are rare
-       enough that a full business-hours engine is not worth maintaining */
     case 'hbd':
     case 'h': {
       const result = new Date(startDate)
       result.setHours(result.getHours() + value)
       return result
     }
+
     case 'mbd':
     case 'm': {
       const result = new Date(startDate)
       result.setMinutes(result.getMinutes() + value)
       return result
     }
+
     case 'd': {
       const result = new Date(startDate)
       result.setDate(result.getDate() + value)
       return result
     }
+
     default: {
       return startDate
     }

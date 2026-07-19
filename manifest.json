@@ -7,7 +7,11 @@
     "react": "3.x",
     "store": "0.x",
     "node": "7.x",
-    "pixel": "0.x"
+    "pixel": "0.x",
+    "messages": "1.x"
+  },
+  "billingOptions": {
+    "type": "free"
   },
   "dependencies": {
     "vtex.responsive-values": "0.x",

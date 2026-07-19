@@ -1,31 +1,50 @@
-import { CancellationData } from '../../node/types/orderDetails'
+import type { IntlShape } from 'react-intl'
+import { defineMessages } from 'react-intl'
+
+import type { CancellationData } from '../../node/types/orderDetails'
 import { formatDate } from './formats'
 
-export const getCancellationText = (cancellationData?: CancellationData | null, isRequest?: boolean): string => {
-  if (!cancellationData) return ''
+const messages = defineMessages({
+  requestedByUser: { id: 'store/my-orders-app.cancellation.requestedByUser' },
+  requestedBySystem: { id: 'store/my-orders-app.cancellation.requestedBySystem' },
+  requestedBySeller: { id: 'store/my-orders-app.cancellation.requestedBySeller' },
+  requestedByPayment: { id: 'store/my-orders-app.cancellation.requestedByPayment' },
+  reasonNotInformed: { id: 'store/my-orders-app.cancellation.reasonNotInformed' },
+  requestText: { id: 'store/my-orders-app.cancellation.requestText' },
+  cancelledText: { id: 'store/my-orders-app.cancellation.cancelledText' },
+})
 
+/** Resolves who requested the cancellation to its localized description */
+const getRequestedBy = (cancellationData: CancellationData, intl: IntlShape): string => {
   const {
     RequestedByUser,
     RequestedBySystem,
     RequestedBySellerNotification,
     RequestedByPaymentNotification,
-    Reason,
-    CancellationDate,
-  } = cancellationData ?? {}
+  } = cancellationData
 
-  const requestedBy = RequestedByUser
-    ? 'pelo usuário'
-    : RequestedBySystem
-      ? 'pelo sistema'
-      : RequestedBySellerNotification
-        ? 'pelo vendedor'
-        : RequestedByPaymentNotification
-          ? 'pela instituição de pagamento'
-          : ''
+  if (RequestedByUser) return intl.formatMessage(messages.requestedByUser)
+  if (RequestedBySystem) return intl.formatMessage(messages.requestedBySystem)
+  if (RequestedBySellerNotification) return intl.formatMessage(messages.requestedBySeller)
+  if (RequestedByPaymentNotification) return intl.formatMessage(messages.requestedByPayment)
 
-  if (isRequest) {
-    return `Há uma solicitação de cancelamento realizada em ${formatDate(CancellationDate)} para este pedido, feita ${requestedBy}. Motivo: ${Reason || 'não informado'}.`
+  return ''
+}
+
+export const getCancellationText = (
+  intl: IntlShape,
+  cancellationData?: CancellationData | null,
+  isRequest?: boolean
+): string => {
+  if (!cancellationData) return ''
+
+  const values = {
+    date: formatDate(cancellationData.CancellationDate),
+    requestedBy: getRequestedBy(cancellationData, intl),
+    reason: cancellationData.Reason || intl.formatMessage(messages.reasonNotInformed),
   }
 
-  return `Pedido cancelado em ${formatDate(CancellationDate)} ${requestedBy}. Motivo: ${Reason || 'não informado'}.`
+  if (isRequest) return intl.formatMessage(messages.requestText, values)
+
+  return intl.formatMessage(messages.cancelledText, values)
 }
