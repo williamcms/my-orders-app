@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pickup-code-schema-v1",
+  "type": "object",
+  "properties": {
+    "orderId": {
+      "type": "string"
+    },
+    "pickupCode": {
+      "type": "string"
+    }
+  },
+  "required": ["orderId", "pickupCode"],
+  "v-default-fields": ["orderId", "pickupCode"],
+  "v-indexed": ["orderId", "pickupCode"],
+  "v-cache": false,
+  "v-security": {
+    "allowGetAll": false,
+    "publicRead": [],
+    "publicWrite": [],
+    "publicFilter": []
+  }
+}

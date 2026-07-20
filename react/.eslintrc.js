@@ -2,7 +2,6 @@ module.exports = {
   extends: 'vtex-react/io',
   rules: {
     'no-console': 'warn',
-    'no-shadow': 'off',
     'no-restricted-imports': 'warn',
     '@typescript-eslint/camelcase': 'off',
     'prettier/prettier': ['error', { endOfLine: 'auto' }],

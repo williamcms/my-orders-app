@@ -1,0 +1,12 @@
+{
+  "adminVersion": 4,
+  "section": "orders",
+  "titleId": "admin/my-orders-app.navigation.group",
+  "subSection": "pickup-codes",
+  "subSectionItems": [
+    {
+      "labelId": "admin/my-orders-app.navigation.label",
+      "path": "/admin/pickup-codes"
+    }
+  ]
+}

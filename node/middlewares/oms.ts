@@ -7,17 +7,15 @@ import { respond } from '../utils/respond'
 
 const BUCKET = 'MY_ORDERS'
 
-const HOUR_INTERVAL = 0.25
+const CACHE_TIME = 5
 
-/** Cache window in milliseconds (HOUR_INTERVAL hours) */
-const TIMESTAMP_LIMIT = HOUR_INTERVAL * 60 * 60 * 1000
+/** Cache window in milliseconds */
+const TIMESTAMP_LIMIT = CACHE_TIME * 60 * 1000
 
 type QueryParams = Record<string, undefined | string | string[]>
 
 const asString = (v: QueryParams, path: string, defaultValue?: unknown): string => {
-  const str = Array.isArray(v?.[path]) ? v?.[path]?.[0] : (v?.[path] as string)
-
-  return str ?? String(defaultValue ?? '')
+  return Array.isArray(v?.[path]) ? v?.[path]?.[0] : ((v?.[path] as string) ?? String(defaultValue ?? ''))
 }
 
 /** Keeps the data field shaped as an OrderListResponse even on failures */
@@ -27,7 +25,7 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
   const {
     state: { orderList, orderDetails },
     vtex: { logger, storeUserAuthToken },
-    clients: { oms, vbase, masterdata },
+    clients: { oms, vbase, pickupCodes },
   } = ctx
 
   if (!storeUserAuthToken) {
@@ -76,17 +74,26 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
     })
   }
 
+  /**
+   * Only called with orderIds returned by the user-token-scoped OMS calls,
+   * so the code is never resolved for an order the user does not own.
+   * The code is complementary: a failure is logged and the order ships without it.
+   */
   const pickupOnStoreCode = async (orderId: string) => {
-    const response = await masterdata.searchDocuments<{ codigo_retirada: string }>({
-      dataEntity: 'CR',
-      fields: ['codigo_retirada'],
-      where: `id_pedido=${orderId}`,
-      pagination: { page: 1, pageSize: 5 },
-    })
+    try {
+      const [data] = await pickupCodes.search({ page: 1, pageSize: 1 }, ['pickupCode'], undefined, `orderId=${orderId}`)
 
-    const [data] = response ?? []
+      /* The generated schema type's index signature widens `pickupCode` to `unknown`; it's always a string at runtime */
+      return (data?.pickupCode as string | undefined) ?? null
+    } catch (err) {
+      logger.warn({
+        error: (err as Error).message,
+        orderId,
+        message: 'getOrder-pickupCode-failed',
+      })
 
-    return data?.codigo_retirada ?? null
+      return null
+    }
   }
 
   /** Details are complementary: a failure is logged and the order ships without them */
@@ -206,7 +213,16 @@ export const getOrderDetails = async (ctx: Context, next: () => Promise<unknown>
   const orderId = asString(params, 'orderId')
 
   try {
-    ctx.state.orderDetails = await oms.getOrderDetails({ orderId, token: storeUserAuthToken })
+    const details = await oms.getOrderDetails({ orderId, token: storeUserAuthToken })
+
+    /* OMS user routes only return orders owned by the token's user; null means not found or not theirs */
+    if (!details) {
+      respond({ ctx, status: 404, success: false, data: emptyList(), message: 'Order not found' })
+
+      return
+    }
+
+    ctx.state.orderDetails = details
   } catch (err) {
     const { status, message } = getErrorStatus(err)
 

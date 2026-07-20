@@ -13,6 +13,14 @@
     "getOrderDetails": {
       "path": "/_v/private/getOrderDetails/:orderId",
       "public": true
+    },
+    "pickupCodes": {
+      "path": "/_v/private/pickup-codes",
+      "public": true
+    },
+    "pickupCode": {
+      "path": "/_v/private/pickup-codes/:id",
+      "public": true
     }
   }
 }

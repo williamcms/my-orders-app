@@ -24,6 +24,7 @@ import { ConnectorResponses } from './ConnectorResponses'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader } from './ui/card'
+import { ProductImage } from './ui/productImage'
 import { Skeleton } from './ui/skeleton'
 import { CalendarIcon, ClockIcon, CopyIcon, PackageIcon, PhoneIcon, StoreIcon } from './ui/svg'
 import { Tooltip } from './ui/tooltip'
@@ -889,16 +890,7 @@ const OrderDetails = ({ match }: Props) => {
               {order.details?.items.map((item) => (
                 <div key={item.id} className={styles.orderItem}>
                   <div className={styles.orderItemImage}>
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className={styles.itemImage}
-                      onError={(e) => {
-                        e.currentTarget.onerror = null
-                        e.currentTarget.src =
-                          'https://{{account}}.vtexassets.com/_v/public/assets/v1/published/vtex.my-orders-app@3.25.3/public/react/2ea7751cc60e35056a078060add977c2.svg'
-                      }}
-                    />
+                    <ProductImage src={item.imageUrl} alt={item.name} className={styles.itemImage} />
                   </div>
 
                   <div className={styles.itemInfo}>

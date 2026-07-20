@@ -1,16 +1,13 @@
 {
+  "name": "my-orders",
   "private": true,
-  "name": "my-orders-app",
+  "license": "UNLICENSED",
   "scripts": {
     "lint": "eslint --ext js,jsx,ts,tsx .",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json}\"",
     "start": "concurrently \"npm:vlink\"",
-    "vlink": "vtex link --verbose --clean"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+    "vlink": "vtex link --verbose --clean",
+    "prepare": "husky"
   },
   "lint-staged": {
     "*.{ts,js,tsx,jsx}": [
@@ -22,20 +19,20 @@
     ]
   },
   "devDependencies": {
-    "@types/node": "^12.12.21",
     "@vtex/danger": "^0.2.9",
-    "@vtex/prettier-config": "0.1.4",
-    "concurrently": "^8.2.2",
-    "eslint": "7.12.1",
-    "eslint-config-vtex": "12.3.2",
-    "eslint-config-vtex-react": "^6.4.0",
-    "husky": "4.2.3",
-    "lint-staged": "10.1.1",
-    "prettier": "2.0.2",
-    "typescript": "3.8.3"
+    "@vtex/prettier-config": "1.0.0",
+    "concurrently": "^10.0.3",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-config-vtex": "15.1.0",
+    "eslint-config-vtex-react": "^9.1.0",
+    "eslint-plugin-prettier": "^5.5.0",
+    "husky": "9.1.7",
+    "lint-staged": "17.0.8",
+    "prettier": "^3.9.5",
+    "typescript": "^4.9.5"
   },
   "dependencies": {},
-  "license": "UNLICENSED",
   "author": {
     "name": "William Di Biasi Bogik",
     "url": "https://github.com/williamcms/"

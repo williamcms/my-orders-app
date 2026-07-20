@@ -3,6 +3,7 @@ import { method, Service } from '@vtex/api'
 
 import { Clients } from './clients'
 import { getOrder, getOrderDetails, listOrders } from './middlewares/oms'
+import { createPickupCode, deletePickupCode, listPickupCodes, updatePickupCode } from './middlewares/pickupCodes'
 import type { OrderListItemWithDetails, OrderListResponse } from './types/orderList'
 
 const TIMEOUT_MS = 5000
@@ -37,6 +38,14 @@ export default new Service({
     }),
     getOrderDetails: method({
       GET: [getOrderDetails, getOrder],
+    }),
+    pickupCodes: method({
+      GET: [listPickupCodes],
+      POST: [createPickupCode],
+    }),
+    pickupCode: method({
+      PUT: [updatePickupCode],
+      DELETE: [deletePickupCode],
     }),
   },
 })

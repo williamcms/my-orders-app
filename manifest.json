@@ -1,14 +1,16 @@
 {
   "name": "my-orders-app",
   "vendor": "{{account}}",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "title": "Custom My Orders Page for My Account",
   "builders": {
+    "admin": "0.x",
     "react": "3.x",
     "store": "0.x",
     "node": "7.x",
     "pixel": "0.x",
-    "messages": "1.x"
+    "messages": "1.x",
+    "masterdata": "1.x"
   },
   "billingOptions": {
     "type": "free"

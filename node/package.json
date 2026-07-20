@@ -1,4 +1,6 @@
 {
+  "name": "my-orders-node",
+  "version": "1.0.0",
   "dependencies": {
     "@vtex/clients": "^2.21.0",
     "co-body": "^6.0.0",
@@ -12,7 +14,15 @@
     "@vtex/api": "^7.4.0",
     "@vtex/test-tools": "^3.4.3",
     "@vtex/tsconfig": "^0.6.0",
-    "typescript": "5.5.3"
+    "typescript": "5.5.3",
+    "vtex.my-account": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.my-account@1.30.1/public/@types/vtex.my-account",
+    "vtex.my-account-commons": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.my-account-commons@1.7.2/public/@types/vtex.my-account-commons",
+    "vtex.order-items": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.order-items@0.14.0/public/@types/vtex.order-items",
+    "vtex.orders-graphql": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.orders-graphql@0.119.2/public/@types/vtex.orders-graphql",
+    "vtex.pixel-manager": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.pixel-manager@1.9.0/public/@types/vtex.pixel-manager",
+    "vtex.responsive-values": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.responsive-values@0.4.2/public/@types/vtex.responsive-values",
+    "vtex.rich-text": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.rich-text@0.16.1/public/@types/vtex.rich-text",
+    "vtex.styleguide": "http://vtex.vtexassets.com/_v/public/typings/v1/vtex.styleguide@9.146.16/public/@types/vtex.styleguide"
   },
   "resolutions": {
     "@types/testing-library__dom": "6.12.1",
@@ -23,6 +33,5 @@
   },
   "scripts": {
     "lint": "tsc --noEmit --pretty"
-  },
-  "version": "0.3.0"
+  }
 }

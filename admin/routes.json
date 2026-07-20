@@ -1,0 +1,6 @@
+{
+  "admin.app.pickup-codes": {
+    "component": "AdminPickupCodes",
+    "path": "/admin/app/pickup-codes"
+  }
+}
