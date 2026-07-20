@@ -25,6 +25,8 @@ import { Tooltip } from './ui/tooltip'
 const messages = defineMessages({
   errorTitle: { id: 'store/my-orders-app.list.errorTitle' },
   retry: { id: 'store/my-orders-app.list.retry' },
+  noOrdersTitle: { id: 'store/my-orders-app.list.noOrders.title' },
+  noOrdersMessage: { id: 'store/my-orders-app.list.noOrders.message' },
   orderDate: { id: 'store/my-orders-app.list.orderDate' },
   total: { id: 'store/my-orders-app.list.total' },
   orderTotal: { id: 'store/my-orders-app.list.orderTotal' },
@@ -144,6 +146,19 @@ const OrderList = ({ history }: Props) => {
         >
           <FormattedMessage {...messages.retry} />
         </Button>
+      </div>
+    )
+  }
+
+  if (orders && orders.list.length === 0 && !loading) {
+    return (
+      <div className={styles.errorContainer}>
+        <h2 className={styles.errorTitle}>
+          <FormattedMessage {...messages.noOrdersTitle} />
+        </h2>
+        <span className={styles.errorMessage}>
+          <FormattedMessage {...messages.noOrdersMessage} />
+        </span>
       </div>
     )
   }

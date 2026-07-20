@@ -47,6 +47,8 @@
   "store/my-orders-app.status.delivered": "Delivered",
   "store/my-orders-app.list.errorTitle": "Error loading the order list",
   "store/my-orders-app.list.retry": "Try again",
+  "store/my-orders-app.list.noOrders.title": "No orders yet",
+  "store/my-orders-app.list.noOrders.message": "When you place an order, it will appear here.",
   "store/my-orders-app.list.orderDate": "ORDER DATE",
   "store/my-orders-app.list.total": "TOTAL",
   "store/my-orders-app.list.orderNumber": "ORDER NUMBER",

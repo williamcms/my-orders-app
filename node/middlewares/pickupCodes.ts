@@ -4,15 +4,17 @@ import type { PickupCodeListResponse, PickupCodeRecord } from '../types/pickupCo
 import { FIELD_LENGTH, MAX_PAGE_SIZE, ORDER_ID_PATTERN } from '../utils/constants'
 import { respond } from '../utils/respond'
 
+type AdminAccess = { ok: true } | { ok: false; status: 401 | 403; message: string }
+
+/** Matches any character that isn't a Unicode letter, digit, whitespace, or one of @ . _ - */
+const REGEX = /[^\p{L}\p{N}\s@._-]/gu
+
 /** Fields fetched for pickup code Master Data documents */
-export const PICKUP_CODE_FIELDS = ['id', 'orderId', 'pickupCode']
+const PICKUP_CODE_FIELDS = ['id', 'orderId', 'pickupCode']
 
 const emptyList = (): PickupCodeListResponse => ({ list: [], pagination: { total: 0, page: 1, pageSize: 0, pages: 0 } })
 
 const emptyRecord = (): PickupCodeRecord => ({ id: '', orderId: '', pickupCode: '' })
-
-/** Matches any character that isn't a Unicode letter, digit, whitespace, or one of @ . _ - */
-const REGEX = /[^\p{L}\p{N}\s@._-]/gu
 
 /**
  * Strips characters with meaning in the Master Data where syntax
@@ -22,12 +24,28 @@ const REGEX = /[^\p{L}\p{N}\s@._-]/gu
 const sanitizeSearchTerm = (term: string) => term.replace(REGEX, '').trim().slice(0, FIELD_LENGTH)
 
 /**
- * Fast rejection for requests without an admin cookie. Real enforcement
- * happens at Master Data: every call below runs with the admin user's own
- * token (pickupCodesAdmin client), so VTEX ID validates it and License
- * Manager applies the user's permissions.
+ * Checks if there's an admin session at all, if the admin is logged in,
+ * and if their role grants OMSViewer.
  */
-const isAdmin = (ctx: Context) => Boolean(ctx.vtex.adminUserAuthToken)
+const checkAdminAccess = async (ctx: Context): Promise<AdminAccess> => {
+  const { adminUserAuthToken } = ctx.vtex
+
+  if (!adminUserAuthToken) {
+    return { ok: false, status: 401, message: 'Unauthorized' }
+  }
+
+  try {
+    const hasAccess = await ctx.clients.licenseManager.canAccessResource(adminUserAuthToken, 'OMSViewer')
+
+    if (!hasAccess) {
+      return { ok: false, status: 403, message: 'Missing OMSViewer permission' }
+    }
+
+    return { ok: true }
+  } catch {
+    return { ok: false, status: 401, message: 'Unauthorized' }
+  }
+}
 
 /** Maps Master Data auth rejections (invalid token / missing LM role) to the envelope */
 const respondAuthError = (ctx: Context, err: unknown, data: PickupCodeListResponse | PickupCodeRecord) => {
@@ -90,8 +108,10 @@ export const listPickupCodes = async (ctx: Context, next: () => Promise<unknown>
     clients: { pickupCodesAdmin },
   } = ctx
 
-  if (!isAdmin(ctx)) {
-    respond({ ctx, status: 401, success: false, data: emptyList(), message: 'Unauthorized' })
+  const access = await checkAdminAccess(ctx)
+
+  if (!access.ok) {
+    respond({ ctx, status: access.status, success: false, data: emptyList(), message: access.message })
 
     return
   }
@@ -135,8 +155,10 @@ export const createPickupCode = async (ctx: Context, next: () => Promise<unknown
     clients: { pickupCodesAdmin },
   } = ctx
 
-  if (!isAdmin(ctx)) {
-    respond({ ctx, status: 401, success: false, data: emptyRecord(), message: 'Unauthorized' })
+  const access = await checkAdminAccess(ctx)
+
+  if (!access.ok) {
+    respond({ ctx, status: access.status, success: false, data: emptyRecord(), message: access.message })
 
     return
   }
@@ -189,8 +211,10 @@ export const updatePickupCode = async (ctx: Context, next: () => Promise<unknown
     clients: { pickupCodesAdmin },
   } = ctx
 
-  if (!isAdmin(ctx)) {
-    respond({ ctx, status: 401, success: false, data: emptyRecord(), message: 'Unauthorized' })
+  const access = await checkAdminAccess(ctx)
+
+  if (!access.ok) {
+    respond({ ctx, status: access.status, success: false, data: emptyRecord(), message: access.message })
 
     return
   }
@@ -244,8 +268,10 @@ export const deletePickupCode = async (ctx: Context, next: () => Promise<unknown
     clients: { pickupCodesAdmin },
   } = ctx
 
-  if (!isAdmin(ctx)) {
-    respond({ ctx, status: 401, success: false, data: emptyRecord(), message: 'Unauthorized' })
+  const access = await checkAdminAccess(ctx)
+
+  if (!access.ok) {
+    respond({ ctx, status: access.status, success: false, data: emptyRecord(), message: access.message })
 
     return
   }

@@ -133,7 +133,8 @@ export const getOrder = async (ctx: Context, next: () => Promise<unknown>) => {
     cache: { isCached: false, timeStamp },
   }
 
-  if (!response.list.length) {
+  /** Only guards the single-order lookup; a plain empty order list is not an error and falls through below */
+  if (!response.list.length && orderDetails) {
     logger.error({
       error: new Error('Not Found'),
       details: response,

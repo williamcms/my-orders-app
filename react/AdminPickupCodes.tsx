@@ -41,6 +41,7 @@ import {
   useTableState,
   useToast,
 } from '@vtex/admin-ui'
+import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { defineMessages, useIntl } from 'react-intl'
 import { useRuntime } from 'vtex.render-runtime'
@@ -77,13 +78,16 @@ function PickupCodes() {
   const dataView = useDataViewState()
   const search = useSearchState({ timeout: 500 })
 
-  /** total lives in the hook's internal reducer: it only reads the param at mount, updates go through paginate({ type: 'setTotal' }) */
+  /**
+   * total lives in the hook's internal reducer: it only reads the param at mount,
+   * updates go through paginate({ type: 'setTotal' })
+   */
   const pagination = usePaginationState({ pageSize: ITEMS_PER_PAGE, total: 0 })
 
   const [items, setItems] = useState<PickupCodeRecord[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  const [errorStatus, setErrorStatus] = useState<number | null>(null)
   const [activeRecord, setActiveRecord] = useState<PickupCodeRecord | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -105,12 +109,13 @@ function PickupCodes() {
 
         setItems(response.data.list)
         setTotal(response.data.pagination.total)
-        setError(false)
+        setErrorStatus(null)
       })
-      .catch(() => {
+      .catch((err) => {
         if (cancelled) return
 
-        setError(true)
+        setErrorStatus(axios.isAxiosError(err) ? (err.response?.status ?? 0) : 0)
+        showToast({ message: errorMessage(err), variant: 'critical' })
       })
       .finally(() => {
         if (cancelled) return
@@ -130,11 +135,15 @@ function PickupCodes() {
   }, [total])
 
   const hasFilters = Boolean(search.debouncedValue)
+  const hasError = errorStatus !== null
+  const isForbidden = errorStatus === 403
 
   useEffect(() => {
     if (loading) {
       dataView.setStatus({ type: 'loading' })
-    } else if (error) {
+    } else if (isForbidden) {
+      dataView.setStatus({ type: 'empty' })
+    } else if (hasError) {
       dataView.setStatus({ type: 'error' })
     } else if (!items.length) {
       dataView.setStatus({ type: hasFilters ? 'not-found' : 'empty' })
@@ -142,7 +151,7 @@ function PickupCodes() {
       dataView.setStatus({ type: 'ready' })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, error, items.length, hasFilters])
+  }, [loading, isForbidden, hasError, items.length, hasFilters])
 
   const openCreate = () => {
     setActiveRecord(null)
@@ -231,9 +240,11 @@ function PickupCodes() {
           <PageHeaderTitle>{formatMessage(messages.title)}</PageHeaderTitle>
 
           <PageHeaderActions>
-            <Button icon={<IconPlus />} onClick={openCreate}>
-              {formatMessage(messages.createButton)}
-            </Button>
+            {!hasError && (
+              <Button icon={<IconPlus />} onClick={openCreate}>
+                {formatMessage(messages.createButton)}
+              </Button>
+            )}
           </PageHeaderActions>
         </PageHeaderTop>
       </PageHeader>

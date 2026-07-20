@@ -47,6 +47,8 @@
   "store/my-orders-app.status.delivered": "Entregue",
   "store/my-orders-app.list.errorTitle": "Erro ao carregar a lista de pedidos",
   "store/my-orders-app.list.retry": "Tentar novamente",
+  "store/my-orders-app.list.noOrders.title": "Nenhum pedido ainda",
+  "store/my-orders-app.list.noOrders.message": "Quando você fizer um pedido, ele aparecerá aqui.",
   "store/my-orders-app.list.orderDate": "DATA DO PEDIDO",
   "store/my-orders-app.list.total": "TOTAL",
   "store/my-orders-app.list.orderNumber": "NÚMERO DO PEDIDO",
