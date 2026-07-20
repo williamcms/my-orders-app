@@ -72,6 +72,21 @@ This app comes with the following dependencies:
 > **Important:**
 > The app includes the `pixel` builder that is used solely to hide the previous native version of the My Orders app. This ensures that only the enhanced version provided by this app is visible to customers.
 
+## Development
+
+### Generating Master Data typings
+
+The `pickupCode` Master Data entity's TypeScript type (`PickupCodeSchemaV1`) is generated from `masterdata/pickupCode/schema.json`, not hand-written. After linking the app, run this at the project root to generate/refresh it:
+
+```sh
+vtex link
+vtex setup --typings
+```
+
+This writes the typings package to `node/node_modules/{{vendor}}.my-orders-app`, re-exporting types for the masterdata, graphql, and react builders. Regenerate it after every change to `masterdata/pickupCode/schema.json`, and again before releasing so the typings aren't tied to your dev workspace.
+
+If the generated type isn't picked up, delete `node/node_modules`, run `yarn`, then `vtex setup --typings` and `vtex link` again.
+
 ## Support
 
 For issues and feature requests, please open an issue in this repository.
