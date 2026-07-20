@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "eslint --ext js,jsx,ts,tsx .",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json}\"",
-    "start": "concurrently \"npm:vlink\"",
+    "start": "node scripts/setup-vendor.js && concurrently \"npm:vlink\"",
     "vlink": "vtex link --verbose --clean",
     "prepare": "husky"
   },

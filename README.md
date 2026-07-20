@@ -74,9 +74,17 @@ This app comes with the following dependencies:
 
 ## Development
 
-### Generating Master Data typings
+### Vendor setup (runs automatically on `yarn start`)
 
-The `pickupCode` Master Data entity's TypeScript type (`PickupCodeSchemaV1`) is generated from `masterdata/pickupCode/schema.json`, not hand-written. After linking the app, run this at the project root to generate/refresh it:
+`yarn start` runs `scripts/setup-vendor.js` before linking. It checks `manifest.json`'s `vendor` field and the vendor prefix in `node/clients/index.ts`'s masterdata typings import (`import type { PickupCodeSchemaV1 } from '{{account}}.my-orders-app'`), plus scans the rest of the repo (excluding `node_modules`, `.git`, `dist`/`build`, `*.md`, `*.lock`) for any other leftover `{{account}}` placeholder.
+
+- If everything is already configured: it writes a local `.env` flag (`VENDOR_SETUP_DONE=true`, gitignored) and exits immediately on future runs. The `manifest.json`/import check still always runs even when that flag is set, since a `git stash`/`reset`/`checkout` can revert those tracked files without touching the local flag.
+- If a placeholder is found anywhere: it prompts you for the real vendor name, updates `manifest.json`'s `vendor` and any other file it found, then runs `vtex setup --typings` for you.
+- `vtex setup --typings` needs an active vtex session. On a first-ever run there isn't one yet, so this step is best-effort: it prints a warning and continues instead of failing `yarn start` if it can't run yet.
+
+### Generating Master Data typings manually
+
+The `pickupCode` Master Data entity's TypeScript type (`PickupCodeSchemaV1`) is generated from `masterdata/pickupCode/schema.json`, not hand-written. After linking the app, run this at the project root to regenerate it:
 
 ```sh
 vtex link

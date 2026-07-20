@@ -16,3 +16,4 @@ react/.eslintrc
 react/setupTests.js
 react/node_modules/
 cypress
+scripts/
